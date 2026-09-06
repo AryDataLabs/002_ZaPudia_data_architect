@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # Main API service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pipeline-api
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - API_WORKERS=${API_WORKERS:-4}
+      - DEBUG=${DEBUG:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      # Mount code for development (comment out for production)
+      - ./src:/app/src
+      # Mount data directories
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./data_pipeline:/app/data_pipeline
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - pipeline-network
+
+  # Optional: Redis for job queue (uncomment if needed)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: pipeline-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+  #   restart: unless-stopped
+  #   networks:
+  #     - pipeline-network
+
+  # Optional: PostgreSQL for persistent storage (uncomment if needed)
+  # db:
+  #   image: postgres:15-alpine
+  #   container_name: pipeline-db
+  #   environment:
+  #     - POSTGRES_USER=${DB_USER:-pipeline}
+  #     - POSTGRES_PASSWORD=${DB_PASSWORD:-pipeline123}
+  #     - POSTGRES_DB=${DB_NAME:-pipeline_db}
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   restart: unless-stopped
+  #   networks:
+  #     - pipeline-network
+
+  # Optional: Nginx reverse proxy (uncomment for production)
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: pipeline-nginx
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./ssl:/etc/nginx/ssl:ro
+  #   depends_on:
+  #     - api
+  #   restart: unless-stopped
+  #   networks:
+  #     - pipeline-network
+
+networks:
+  pipeline-network:
+    driver: bridge
+
+volumes:
+  # redis-data:
+  # postgres-data:

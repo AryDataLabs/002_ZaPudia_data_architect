@@ -10,15 +10,15 @@ __email__      = "aryanto.dandan@gmail.com"
 __created__    = "2026-08-31"
 __modified__   = "2026-09-07"
 
-from logging    import getLogger
-from typing     import Dict, List
-from confreader import load_config, ConfigError
-from pydantic   import (BaseModel, 
-                        Field, 
-                        NonNegativeFloat,
-                        PositiveInt)
+from logging     import getLogger
+from typing      import Dict, List
+from pydantic    import (BaseModel, 
+                         Field, 
+                         NonNegativeFloat,
+                         PositiveInt)
+from .confreader import load_config, ConfigError
 
-logger = logging.getLogger("SchemaRead")
+logger = getLogger("SchemaRead")
 
 class PipelineMeta(BaseModel):
     name             : str

@@ -24,7 +24,6 @@ Exports (in cfg.output_dir):
   - implicit_matrix.parquet
   - cold_items.json, null_items.json, build_manifest.json
 """
-from __future__ import annotations
 
 import json
 from dataclasses import asdict
@@ -55,7 +54,7 @@ def _ensure_dirs(*paths: str | Path) -> None:
         Path(p).mkdir(parents=True, exist_ok=True)
 
 
-def build_dataset(config_path: str | Path = "data_pipeline/configs/pipeline_config.yaml") -> dict[str, Any]:
+def build_dataset(config_path: str | Path = "data_pipeline/configs/pipeconf.yaml") -> dict[str, Any]:
     """Run the full pipeline. Returns a build manifest dict."""
     cfg = _load_config(config_path)
     seed: int = cfg["pipeline"]["seed"]

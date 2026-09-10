@@ -1,0 +1,114 @@
+name: Build Wheel Distribution
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build wheel for Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14', '3.15']
+        include:
+          # Test on Windows and macOS for key versions
+          - os: windows-latest
+            python-version: '3.12'
+          - os: macos-latest
+            python-version: '3.12'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build setuptools wheel twine
+
+      - name: Build wheel and sdist
+        run: |
+          python -m build --wheel --sdist
+
+      - name: Verify wheel metadata
+        run: |
+          python -m twine check dist/*
+
+      - name: Display wheel contents
+        run: |
+          python -c "
+          import zipfile, glob, sys
+          wheels = glob.glob('dist/*.whl')
+          if not wheels:
+              print('No wheel found!'); sys.exit(1)
+          for w in wheels:
+              print(f'=== {w} ===')
+              with zipfile.ZipFile(w) as zf:
+                  for name in sorted(zf.namelist()):
+                      print(f'  {name}')
+          "
+
+      - name: Install wheel and import test
+        run: |
+          python -m pip install --force-reinstall dist/*.whl
+          python -c "import pipeline; import extractors; import transformers; import noise; import api; import configs; print('All packages imported successfully')"
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zapudia-wheel-py${{ matrix.python-version }}-${{ matrix.os }}
+          path: dist/*.whl
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Upload sdist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zapudia-sdist-py${{ matrix.python-version }}-${{ matrix.os }}
+          path: dist/*.tar.gz
+          retention-days: 30
+          if-no-files-found: warn
+
+  publish:
+    name: Publish to GitHub Releases
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all wheel artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+          pattern: zapudia-wheel-*
+
+      - name: Display downloaded artifacts
+        run: ls -la dist/
+
+      - name: Create GitHub Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.whl
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}

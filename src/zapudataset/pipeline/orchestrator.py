@@ -25,7 +25,7 @@ Usage:
     from pipeline_orchestrator import DatasetPipeline
     
     pipeline = DatasetPipeline(
-        config_path="configs/pipeline_config.yaml",
+        config_path="configs/pipeconf.yaml",
         log_level="INFO"
     )
     manifest = pipeline.run()
@@ -84,7 +84,7 @@ class DatasetPipeline:
     
     def __init__(
         self,
-        config_path: str | Path = "data_pipeline/configs/pipeline_config.yaml",
+        config_path: str | Path = "data_pipeline/configs/pipeconf.yaml",
         log_level: str = "INFO",
         log_file: str | Path | None = None,
     ):
@@ -421,7 +421,7 @@ Examples:
     parser.add_argument(
         "--config",
         type=str,
-        default="data_pipeline/configs/pipeline_config.yaml",
+        default="data_pipeline/configs/pipeconf.yaml",
         help="Path to pipeline configuration YAML"
     )
     parser.add_argument(

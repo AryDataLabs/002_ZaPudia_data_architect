@@ -41,7 +41,7 @@ def logconfig(config_path: str = None):
         print("Using default logging configuration.")
         log_config = None
     date_str    = datetime.now().strftime('%Y%m%d')
-    log_dir     = str(base_dir.parents[1]/'artifacts'/'logs'/date_str)
+    log_dir     = str(base_dir.parents[2]/'artifacts'/'logs'/date_str)
     Path(log_dir).mkdir(parents = True, exist_ok = True)
     log_name    = log_config.log_file if log_config else 'app.log'
     log_level   = log_config.level if log_config else 'INFO'

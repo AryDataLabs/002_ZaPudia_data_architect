@@ -55,7 +55,7 @@ def logconfig(config_path: str = None):
     logging.getLogger('matplotlib').setLevel(logging.WARNING)
     logging.getLogger('graphviz').setLevel(logging.WARNING)
     logger = logging.getLogger(__name__)
-    logger.info(f"Logging configured: level={log_level}, file={log_path}")
+    logger.info(f"Logging configured: level = {log_level}, file = {log_path}")
     return logger
 
 if __name__ == "__main__":

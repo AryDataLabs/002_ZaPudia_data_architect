@@ -45,7 +45,7 @@ from .schemaread import (GA4Source,
                          SourcesConfig,
                          SplitConfig,
                          SchemaRead,)
-logger = logconfig()
+logger  = logconfig()
 
 __all__ = [# Metadata
            "__author__",

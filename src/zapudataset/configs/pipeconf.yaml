@@ -63,6 +63,7 @@ session:
 
 logging:
   log_file          : "zapudia_pipeline.log"
+  logpath           : "~/artifact/logs"
   level             : "WARNING"
 
 geo_provinces:

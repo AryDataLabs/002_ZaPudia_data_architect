@@ -27,9 +27,9 @@ from typing    import Tuple
 from datetime  import datetime, timedelta
 from ..configs import PipeConfig, load_config, logger
 
+
 def _rng(seed: int) -> np.random.Generator:
     return np.random.default_rng(seed)
-
 
 def _backfill_dwell(
         events: pl.DataFrame, 
@@ -62,10 +62,14 @@ def simulate_ga4_events(
         device_weights : Tuple[float, float, float] = (0.78, 0.18, 0.04),
     ) -> pl.DataFrame:
     """
-    Augment the DataFrame events with GA4 telemetry using the PipeConfig configuration. 
+    Augment the DataFrame events with GA4 telemetry 
+    using the PipeConfig configuration. 
     - Seed is obtained from `config.pipeline.seed`
-    - Geo provinces are obtained from `config.geo_provinces`
-    - The dwell time cap is obtained from `config.session.gap_minutes` (converted to ms)    """
+    - Geo provinces are obtained from 
+      `config.geo_provinces`
+    - The dwell time cap is obtained from 
+      `config.session.gap_minutes` (converted to ms)
+    """
     seed      = config.pipeline.seed
     provinces = config.geo_provinces
     cap_ms    = config.session.gap_minutes * 60 * 1000

@@ -100,7 +100,6 @@ def load_config(
         schema     : Optional[Type[T]] = None,
     ) -> Union[T, dict[str, Any]]:
     """Fungsi utama pembaca konfigurasi YAML.
-    Args:
         config_path: Path ke file .yaml/.yml
         schema: (Opsional) Class Pydantic BaseModel untuk validasi tipe data.
     Returns:

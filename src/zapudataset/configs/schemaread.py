@@ -10,6 +10,7 @@ __email__      = "aryanto.dandan@gmail.com"
 __created__    = "2026-08-31"
 __modified__   = "2026-09-07"
 
+from pathlib     import Path
 from logging     import getLogger
 from typing      import Dict, List
 from pydantic    import (BaseModel, 
@@ -18,6 +19,7 @@ from pydantic    import (BaseModel,
                          PositiveInt)
 from .confreader import load_config, ConfigError
 
+LocDir = Path(__file__).resolve().parent
 logger = getLogger("SchemaRead")
 
 class PipelineMeta(BaseModel):
@@ -94,11 +96,14 @@ class PipeConfig(BaseModel):
     geo_provinces          : List[str]
     categories             : Dict[str, List[str]]
 
-def SchemaRead(confpath):
+def SchemaRead(confpath:Path = None):
     '''
     Run this for main Schema reading
     '''
     try:
+        if confpath is None:
+            confpath = LocDir / "pipeconf.yaml"
+        confpath = Path(confpath).resolve()
         cfg                              : PipeConfig = load_config(str(confpath), 
                                            schema     = PipeConfig)
         logger.debug(f"Loaded Config     : {cfg.pipeline.name} v{cfg.pipeline.version}")

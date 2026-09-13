@@ -17,11 +17,9 @@ Unified Data Schema (§1.2), and writes a harmonized intermediate parquet.
 Vectorized with Polars; no Python row-level loops on hot paths.
 """
 
-from pathlib import Path
-from typing import Any
-
 import polars as pl
-
+from typing import Any
+from pathlib import Path
 
 _KAGGLE_BEHAVIOR_SCHEMA = pl.Schema(
     {"event_time"     : pl.Datetime("ms"),

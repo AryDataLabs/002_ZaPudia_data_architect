@@ -11,11 +11,11 @@ __created__    = "2026-08-31"
 __modified__   = "2026-09-06"
 
 
-"""End-to-end dataset builder orchestrator.
-
+"""
+End-to-end dataset builder orchestrator.
+________________________________________
 Wires extractors -> noise -> implicit builder -> feature encoder -> split ->
 partitioned parquet exports. Single entry point for the whole pipeline.
-
 Exports (in cfg.output_dir):
   - train_interactions.parquet
   - test_interactions.parquet

@@ -29,12 +29,16 @@ base_dir = Path(__file__).resolve().parents[0]
 def logconfig(config_path: str = None):
     """
     Configure logging using schema-validated YAML configuration.
-    config_path: Path to YAML config file. Defaults to 'pipeconf.yaml' in same directory.
+    config_path: Path to YAML config file. 
+    Defaults to 'pipeconf.yaml' in same directory.
     """
-    if config_path is None:
-        config_path = base_dir / 'pipeconf.yaml'
+    config_path = (config_path or 
+                  os.getenv(DEFAULT_CONFIG_PATH) or 
+                  (base_dir / 'pipeconf.yaml'))
     try:
-        cfg: PipeConfig = load_config(str(config_path), schema=PipeConfig)
+        cfg: PipeConfig = load_config(
+                          str(config_path), 
+                          schema = PipeConfig)
         log_config = cfg.logging
     except ConfigError as e:
         print(f"WARNING: Failed to load config from {config_path}: {e}")

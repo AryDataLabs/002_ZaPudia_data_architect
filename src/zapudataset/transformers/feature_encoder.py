@@ -24,10 +24,9 @@ model consumption. Vectorized with Polars.
 """
 
 import json
-from pathlib import Path
-from typing import Any
-
-import polars as pl
+import polars  as pl
+from   pathlib import Path
+from   typing  import Any
 
 
 def _ordinal_encode(
@@ -124,3 +123,6 @@ def build_user_features(
     map_path = out_path.with_suffix(".encoders.json")
     map_path.write_text(json.dumps(maps))
     return out_path, maps
+
+if __name__ == '__main__':
+    pass

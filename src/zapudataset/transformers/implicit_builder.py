@@ -18,9 +18,9 @@ unified event stream using DuckDB SQL over parquet, so multi-gigabyte logs are
 processed without memory exhaustion. Implements §3.
 """
 
-from pathlib import Path
 import duckdb
-import polars as pl
+import polars  as pl
+from   pathlib import Path
 
 
 def build_implicit_matrix(
@@ -91,3 +91,6 @@ def write_implicit_matrix(
     out_path.parent.mkdir(parents=True, exist_ok=True)
     df.write_parquet(out_path)
     return out_path
+
+if __name__ == '__main__':
+    pass

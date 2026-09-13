@@ -1,2 +1,29 @@
-"""Ultimate ZaPudia Unified Dataset pipeline."""
-__version__ = "0.1.1"
+#!/usr/bin/env python3
+
+__author__     = "Aryanto"
+__copyright__  = "Copyright 2026, AryDataLabs/ZaPuDia Series"
+__credits__    = ["aryanto"]
+__license__    = "GNU_Public"
+__version__    = "0.1.1"
+__maintainer__ = "Aryanto, M.Si"
+__email__      = "aryanto.dandan@gmail.com"
+__created__    = "2026-08-31"
+__modified__   = "2026-09-13"
+
+from . import api
+from . import blueprint
+from . import configs
+from . import extractors
+from . import noise
+from . import pipeline
+from . import transformers
+from .dataset_builder import build_dataset
+
+__all__ = ['build_dataset',
+           'api',
+           'blueprint',
+           'configs',
+           'extractors',
+           'noise',
+           'pipeline',
+           'transformers',]

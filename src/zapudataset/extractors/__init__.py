@@ -14,11 +14,13 @@ from .kaggle_loader        import load_kaggle_behavior, load_kaggle_orders
 from .ga4_stream_simulator import simulate_ga4_events
 from .bigquery_connect     import BigQueryExporter
 from .kaggle_setup         import KaggleSetup, KaggleDown
+from .bqinits              import BQcred
 
 __all__ = ['load_kaggle_behavior',
            'load_kaggle_orders',
            'simulate_ga4_events',
            'BigQueryExporter',
            'KaggleSetup', 
-           'KaggleDown',]
+           'KaggleDown',
+           'BQcred',]
 

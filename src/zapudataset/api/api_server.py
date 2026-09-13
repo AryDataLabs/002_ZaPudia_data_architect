@@ -1,3 +1,16 @@
+#!/usr/bin/env python3
+
+__author__     = "Aryanto"
+__copyright__  = "Copyright 2026, AryDataLabs/ZaPuDia Series"
+__credits__    = ["aryanto"]
+__license__    = "GNU_Public"
+__version__    = "0.0.1"
+__maintainer__ = "Aryanto, M.Si"
+__email__      = "aryanto.dandan@gmail.com"
+__created__    = "2026-08-31"
+__modified__   = "2026-09-06"
+
+
 """Litestar API Server for Dataset Pipeline.
 
 Provides REST API endpoints to:
@@ -9,7 +22,6 @@ Provides REST API endpoints to:
 Run with: python api_server.py
 Or with uvicorn: uvicorn api_server:app --host 0.0.0.0 --port 8000
 """
-from __future__ import annotations
 
 import asyncio
 import json
@@ -208,7 +220,7 @@ async def trigger_pipeline(
     # Get config path from request or use default
     config_path = data.get(
         "config_path",
-        "data_pipeline/configs/pipeline_config.yaml"
+        "data_pipeline/configs/pipeconf.yaml"
     )
     
     # Validate config exists

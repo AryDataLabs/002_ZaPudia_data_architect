@@ -58,7 +58,7 @@ from pipeline_orchestrator import DatasetPipeline
 
 # Initialize and run
 pipeline = DatasetPipeline(
-    config_path="data_pipeline/configs/pipeline_config.yaml",
+    config_path="data_pipeline/configs/pipeconf.yaml",
     log_level="INFO"
 )
 
@@ -91,7 +91,7 @@ log_dir.mkdir(exist_ok=True)
 log_file = log_dir / f"pipeline_{datetime.now():%Y%m%d_%H%M%S}.log"
 
 pipeline = DatasetPipeline(
-    config_path="configs/pipeline_config.yaml",
+    config_path="configs/pipeconf.yaml",
     log_level="DEBUG",
     log_file=log_file
 )

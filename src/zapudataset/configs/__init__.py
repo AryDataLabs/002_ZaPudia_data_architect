@@ -27,6 +27,7 @@ __modified__   = "2026-09-07"
 # --------------------------------------------------------------------------
 # Relative Imports from Internal Modules
 # --------------------------------------------------------------------------
+import os
 from .logconf    import  logconfig
 from .confreader import (ConfigError,
                          ConfigNotFoundError,
@@ -45,7 +46,10 @@ from .schemaread import (GA4Source,
                          SourcesConfig,
                          SplitConfig,
                          SchemaRead,)
-logger  = logconfig()
+
+ymlpath   = os.getenv("DEFAULT_CONFIG_PATH")
+configure = SchemaRead(ymlpath)
+logger    = logconfig(ymlpath)
 
 __all__ = [# Metadata
            "__author__",
@@ -80,3 +84,6 @@ __all__ = [# Metadata
            
            # Pipeline Execution Utilities
            "SchemaRead",]
+
+if __name__ == '__main__':
+    print('You call Config directory.')

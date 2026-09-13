@@ -36,24 +36,27 @@ class BigQueryExporter:
 
     def __init__(
             self, 
-            project_id: str, 
-            credentials: Optional[gauth.credentials.Credentials] = None,
+            project_id  : str, 
+            credentials : Optional[gauth.credentials.Credentials] = None,
         ):
         """
         Initialize BigQuery Exporter.
-
-        :param project_id: GCP Project ID
-        :param credentials: Optional auth credentials (defaults to Application Default Credentials)
+        :param project_id  : GCP Project ID
+        :param credentials : Optional auth credentials 
+                             (defaults to Application Default Credentials)
         """
-        self.project_id = project_id
+        self.project_id    = project_id
         if credentials is None:
             credentials, _ = gauth.default()
-        self.client = bigquery.Client(project=project_id, credentials=credentials)
-        self.df: Optional[pd.DataFrame] = None
+        self.client        = bigquery.Client(
+                             project     = project_id, 
+                             credentials = credentials)
+        self.df            = None
 
     def run_query(self, sql_query: str) -> pd.DataFrame:
         """
-        Executes SQL query on BigQuery and stores the result in self.df.
+        Executes SQL query on BigQuery and 
+        stores the result in self.df.
         :param sql_query: SQL query string to be executed
         :return: pandas.DataFrame stored in self.df
         """
@@ -65,7 +68,7 @@ class BigQueryExporter:
 
     def export_to_local_csv(
             self, 
-            filepath  : str           = "query_result.csv", 
+            filepath  : str           = "ZaPuDia_Dataset.csv", 
             sql_query : Optional[str] = None,
         ) -> str:
         """
@@ -87,10 +90,10 @@ class BigQueryExporter:
 
     def export_to_gdrive(
         self,
-        filename: str = "query_result.csv",
-        sql_query: Optional[str] = None,
-        folder_id: Optional[str] = None,
-        gdrive_mount_path: Optional[str] = None
+        filename         : str = "ZaPuDia_Dataset.csv",
+        sql_query        : Optional[str] = None,
+        folder_id        : Optional[str] = None,
+        gdrive_mount_path: Optional[str] = None,
     ) -> Optional[str]:
         """
         Saves the stored DataFrame (or executes a new query) to Google Drive.
@@ -110,7 +113,7 @@ class BigQueryExporter:
         # Option 1: Save via Google Colab mounted drive path
         if gdrive_mount_path:
             full_path = os.path.join(gdrive_mount_path, filename)
-            self.df.to_csv(full_path, index=False)
+            self.df.to_csv(full_path, index = False)
             logger.info("File successfully saved to "
             f"Google Drive (Mounted) at: {full_path}")
             return full_path

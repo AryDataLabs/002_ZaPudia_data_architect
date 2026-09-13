@@ -13,6 +13,7 @@ __modified__   = "2026-09-12"
 import os
 import json
 from pathlib import Path
+from ..configs import logger
 
 def KaggleSetup(username, Token):
     Success = False
@@ -24,10 +25,10 @@ def KaggleSetup(username, Token):
         with open(Dest, 'w') as thefile:
             json.dump(auth, thefile)
         os.chmod(ConfDir, 0o600)
-        print(f'Kaggle API Dir: {ConfDir}')
+        logger.debug(f'Kaggle API Dir: {ConfDir}')
         Success = True
     except Exception as Arr:
-        print(f'Failed : {Arr}')
+        logger.error(f'Failed : {Arr}')
     finally:
         return Success
 
@@ -37,14 +38,14 @@ def KaggleDown(address : str = 'andrexibiza/grocery-sales-dataset'):
         from kaggle.api.kaggle_api_extended import KaggleApi
         api = KaggleApi()
         api.authenticate()
-        print(f'Downloading {address} ...', end = '\r')
+        logger.debug(f'Downloading {address} ...', end = '\r')
         api.dataset_download_files(address, path='.', unzip=True)
-        print('Download Success')
+        logger.debug('Download Success')
         Success = True
     except Exception as Arr:
-        print(f'Failed : {Arr}')
+        logger.error(f'Failed : {Arr}')
     finally:
-        print('Files:', os.listdir('.'))
+        logger.info('Files:', os.listdir('.'))
         return Success
 
 if __name__ == '__main__':

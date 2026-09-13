@@ -17,10 +17,8 @@ Builds the implicit-score + min-max-normalized pseudo-rating matrix from the
 unified event stream using DuckDB SQL over parquet, so multi-gigabyte logs are
 processed without memory exhaustion. Implements §3.
 """
-from __future__ import annotations
 
 from pathlib import Path
-
 import duckdb
 import polars as pl
 

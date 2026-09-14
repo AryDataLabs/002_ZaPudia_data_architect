@@ -11,10 +11,12 @@ __created__    = "2026-08-31"
 __modified__   = "2026-09-13"
 
 
-from .api_server import app
+from .api_server import app, create_app, main
 from .apimod import JobStatus, JobStore, PipelineJob, job_store
 
 __all__ = ["app",
+           "create_app",
+           "main",
            "job_store",
            "JobStore",
            "JobStatus",

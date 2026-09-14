@@ -17,8 +17,8 @@ Quick helper module to grab local .sql query
 files and pass 'em to BigQuery.
 """
 
-from pathlib  import Path
-from ..config import logger
+from pathlib   import Path
+from ..configs import logger
 
 MODULE_DIR = Path(__file__).resolve().parent
 

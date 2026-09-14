@@ -29,6 +29,7 @@ from ..noise        import  NoiseConfig, inject_all
 from ..extractors   import (simulate_ga4_events, 
                             load_kaggle_behavior, 
                             load_kaggle_orders)
+from ..generation import grow_split_to_size
 from ..transformers import (write_implicit_matrix, 
                             build_item_features, 
                             build_user_features)
@@ -185,6 +186,7 @@ class TrainTestSplitStage(PipelineStage):
         min_user_interactions: int,
         seed: int,
         output_dir: Path,
+        generation_config: dict[str, Any] | None = None,
     ) -> tuple[Path, Path, pl.DataFrame, pl.DataFrame]:
         """Split users into train and test sets.
         
@@ -215,7 +217,10 @@ class TrainTestSplitStage(PipelineStage):
         
         # Sample test users
         n_test = int(test_fraction * eligible_users.len())
-        test_users = set(eligible_users.sample(n=n_test, seed=seed).to_list())
+        if n_test <= 0:
+            # A smoke test must never silently create an empty parquet.
+            n_test = 1 if eligible_users.len() >= 2 and test_fraction > 0 else 0
+        test_users = set(eligible_users.sample(n=n_test, seed=seed).to_list()) if n_test else set()
         
         logger.info(f"Test users: {len(test_users)} ({test_fraction*100:.1f}%)")
         
@@ -230,9 +235,16 @@ class TrainTestSplitStage(PipelineStage):
         train_path = output_dir / "train_interactions.parquet"
         test_path = output_dir / "test_interactions.parquet"
         
-        train.write_parquet(train_path)
-        test.write_parquet(test_path)
-        
+        generation_config = generation_config or {}
+        train, test = grow_split_to_size(
+            train, test, train_path, test_path,
+            {"pipeline": {"seed": seed}, "generation": generation_config},
+        )
+
+        logger.info(
+            f"Final split sizes: train={train_path.stat().st_size / 1024 / 1024:.2f} MB, "
+            f"test={test_path.stat().st_size / 1024 / 1024:.2f} MB"
+        )
         logger.debug(f"Saved train data to {train_path}")
         logger.debug(f"Saved test data to {test_path}")
         

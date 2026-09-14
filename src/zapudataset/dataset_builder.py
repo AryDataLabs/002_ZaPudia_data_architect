@@ -33,7 +33,7 @@ from   datetime    import datetime, timezone
 from   pathlib     import Path
 from   typing      import Any
 
-from .noise        import NoiseConfig, inject_all
+from .noise        import  NoiseConfig, inject_all
 from .extractors   import (simulate_ga4_events,
                            load_kaggle_behavior,
                            load_kaggle_orders)

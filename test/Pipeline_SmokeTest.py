@@ -24,27 +24,34 @@ from src.zapudataset.configs import logger
 
 def example_basic():
     """Basic pipeline execution with console logging."""
-    logger.debug("\n" + "="*80)
-    logger.debug("Example 1: Basic Execution")
-    logger.debug("="*80 + "\n")
+    logger.info("\n" + "="*80)
+    logger.info("Example 1: Basic Execution")
+    logger.info("="*80 + "\n")
     
     pipeline = DatasetPipeline(
     config_path="src/zapudataset/configs/pipeconf.yaml")
     
     manifest = pipeline.run()
-    
-    logger.debug(f"\n✓ Pipeline completed successfully!")
-    logger.debug(f"✓ Total duration: {manifest['timing']['total_duration_formatted']}")
-    logger.debug(f"✓ Outputs: {pipeline.config.output_dir}")
+
+    train_path = Path(manifest["outputs"]["train_interactions"])
+    test_path = Path(manifest["outputs"]["test_interactions"])
+    assert train_path.exists() and train_path.stat().st_size > 0
+    assert test_path.exists() and test_path.stat().st_size > 0
+    assert manifest["metrics"]["n_events_train"] > 0
+    assert manifest["metrics"]["n_events_test"] > 0
+
+    logger.info(f"\n✓ Pipeline completed successfully!")
+    logger.info(f"✓ Total duration: {manifest['timing']['total_duration_formatted']}")
+    logger.info(f"✓ Outputs: {pipeline.config.output_dir}")
     
     return manifest
 
 
 def example_with_file_logging():
     """Pipeline with file logging for detailed diagnostics."""
-    logger.debug("\n" + "="*80)
-    logger.debug("Example 2: With File Logging")
-    logger.debug("="*80 + "\n")
+    logger.info("\n" + "="*80)
+    logger.info("Example 2: With File Logging")
+    logger.info("="*80 + "\n")
     
     # Create timestamped log file
     log_dir = Path("logs")
@@ -57,21 +64,21 @@ def example_with_file_logging():
         log_file=log_file
     )
     
-    logger.debug(f"Log file: {log_file}")
+    logger.info(f"Log file: {log_file}")
     
     manifest = pipeline.run()
     
-    logger.debug(f"\n✓ Pipeline completed!")
-    logger.debug(f"✓ Check detailed logs in: {log_file}")
+    logger.info(f"\n✓ Pipeline completed!")
+    logger.info(f"✓ Check detailed logs in: {log_file}")
     
     return manifest
 
 
 def example_debug_mode():
     """Debug mode with maximum verbosity."""
-    logger.debug("\n" + "="*80)
-    logger.debug("Example 3: Debug Mode")
-    logger.debug("="*80 + "\n")
+    logger.info("\n" + "="*80)
+    logger.info("Example 3: Debug Mode")
+    logger.info("="*80 + "\n")
     
     log_file = Path("logs") / f"debug_{datetime.now():%Y%m%d_%H%M%S}.log"
     
@@ -83,17 +90,17 @@ def example_debug_mode():
     
     manifest = pipeline.run()
     
-    logger.debug(f"\n✓ Debug run completed!")
-    logger.debug(f"✓ Full debug logs: {log_file}")
+    logger.info(f"\n✓ Debug run completed!")
+    logger.info(f"✓ Full debug logs: {log_file}")
     
     return manifest
 
 
 def example_custom_config():
     """Use a custom configuration file."""
-    logger.debug("\n" + "="*80)
-    logger.debug("Example 4: Custom Configuration")
-    logger.debug("="*80 + "\n")
+    logger.info("\n" + "="*80)
+    logger.info("Example 4: Custom Configuration")
+    logger.info("="*80 + "\n")
     
     # You can create different configs for different experiments
     custom_config = "src/zapudataset/configs/pipeconf.yaml"  # Use main config for now
@@ -105,17 +112,17 @@ def example_custom_config():
     
     manifest = pipeline.run()
     
-    logger.debug(f"\n✓ Custom config run completed!")
-    logger.debug(f"✓ Config: {custom_config}")
+    logger.info(f"\n✓ Custom config run completed!")
+    logger.info(f"✓ Config: {custom_config}")
     
     return manifest
 
 
 def example_inspect_manifest():
     """Run pipeline and inspect the manifest."""
-    logger.debug("\n" + "="*80)
-    logger.debug("Example 5: Inspect Build Manifest")
-    logger.debug("="*80 + "\n")
+    logger.info("\n" + "="*80)
+    logger.info("Example 5: Inspect Build Manifest")
+    logger.info("="*80 + "\n")
     
     pipeline = DatasetPipeline(
         config_path="data_pipeline/configs/pipeline_config.yaml",
@@ -125,37 +132,37 @@ def example_inspect_manifest():
     manifest = pipeline.run()
     
     # Inspect results
-    logger.debug("\n" + "-"*80)
-    logger.debug("MANIFEST INSPECTION")
-    logger.debug("-"*80)
+    logger.info("\n" + "-"*80)
+    logger.info("MANIFEST INSPECTION")
+    logger.info("-"*80)
     
-    logger.debug(f"\nPipeline Version: {manifest['pipeline']['version']}")
-    logger.debug(f"Architecture: {manifest['pipeline']['architecture']}")
+    logger.info(f"\nPipeline Version: {manifest['pipeline']['version']}")
+    logger.info(f"Architecture: {manifest['pipeline']['architecture']}")
     
-    logger.debug(f"\nData Metrics:")
+    logger.info(f"\nData Metrics:")
     metrics = manifest['metrics']
     for key, value in metrics.items():
-        logger.debug(f"  {key:25s}: {value:>10,}")
+        logger.info(f"  {key:25s}: {value:>10,}")
     
-    logger.debug(f"\nTiming Breakdown:")
+    logger.info(f"\nTiming Breakdown:")
     for stage, duration in manifest['timing']['stage_durations_seconds'].items():
         total = manifest['timing']['total_duration_seconds']
         pct = (duration / total) * 100
-        logger.debug(f"  {stage:30s}: {duration:6.2f}s ({pct:5.1f}%)")
+        logger.info(f"  {stage:30s}: {duration:6.2f}s ({pct:5.1f}%)")
     
-    logger.debug(f"\nOutput Files:")
+    logger.info(f"\nOutput Files:")
     for name, path in manifest['outputs'].items():
         size = Path(path).stat().st_size / (1024 * 1024)  # MB
-        logger.debug(f"  {name:25s}: {Path(path).name} ({size:.2f} MB)")
+        logger.info(f"  {name:25s}: {Path(path).name} ({size:.2f} MB)")
     
     return manifest
 
 
 def example_error_handling():
     """Demonstrate error handling with invalid config."""
-    logger.debug("\n" + "="*80)
-    logger.debug("Example 6: Error Handling")
-    logger.debug("="*80 + "\n")
+    logger.info("\n" + "="*80)
+    logger.info("Example 6: Error Handling")
+    logger.info("="*80 + "\n")
     
     try:
         # This will fail with a clear error message
@@ -165,19 +172,19 @@ def example_error_handling():
         )
         manifest = pipeline.run()
     except FileNotFoundError as e:
-        logger.debug(f"✗ Expected error caught: {e}")
-        logger.debug("✓ Error handling works correctly!")
+        logger.info(f"✗ Expected error caught: {e}")
+        logger.info("✓ Error handling works correctly!")
     except Exception as e:
-        logger.debug(f"✗ Unexpected error: {e}")
+        logger.info(f"✗ Unexpected error: {e}")
 
 
 def main():
     """Run all examples (comment out the ones you don't need)."""
-    logger.debug("\n" + "#"*80)
-    logger.debug("#" + " "*78 + "#")
-    logger.debug("#" + " "*20 + "DATASET PIPELINE - USAGE EXAMPLES" + " "*25 + "#")
-    logger.debug("#" + " "*78 + "#")
-    logger.debug("#"*80)
+    logger.info("\n" + "#"*80)
+    logger.info("#" + " "*78 + "#")
+    logger.info("#" + " "*20 + "DATASET PIPELINE - USAGE EXAMPLES" + " "*25 + "#")
+    logger.info("#" + " "*78 + "#")
+    logger.info("#"*80)
     
     # Run the example you want (uncomment the one you need)
     
@@ -199,11 +206,11 @@ def main():
     # Error handling demo
     # example_error_handling()
     
-    logger.debug("\n" + "#"*80)
-    logger.debug("#" + " "*78 + "#")
-    logger.debug("#" + " "*25 + "ALL EXAMPLES COMPLETED" + " "*31 + "#")
-    logger.debug("#" + " "*78 + "#")
-    logger.debug("#"*80 + "\n")
+    logger.info("\n" + "#"*80)
+    logger.info("#" + " "*78 + "#")
+    logger.info("#" + " "*25 + "ALL EXAMPLES COMPLETED" + " "*31 + "#")
+    logger.info("#" + " "*78 + "#")
+    logger.info("#"*80 + "\n")
 
 
 if __name__ == "__main__":

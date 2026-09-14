@@ -97,5 +97,5 @@ def BQcred(
         raise RuntimeError("Failed to initialize "
         f"BigQueryExporter: {err}") from err
 
-if__name__ == '__main__':
+if __name__ == '__main__':
     pass

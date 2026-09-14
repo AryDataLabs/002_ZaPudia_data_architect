@@ -94,3 +94,14 @@ categories:
     - "automotive.motorcycle.helmet"
     - "automotive.oil"
     - "automotive.tire"
+
+
+# Synthetic data floor. The pipeline grows real interaction rows (not byte padding)
+# until each exported split reaches the configured compressed parquet size.
+generation:
+  bootstrap_users        : 20000
+  interactions_per_user  : 25
+  item_count             : 50000
+  min_train_mb           : 100
+  min_test_mb            : 100
+  max_growth_rounds      : 8

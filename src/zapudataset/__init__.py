@@ -10,18 +10,23 @@ __email__      = "aryanto.dandan@gmail.com"
 __created__    = "2026-08-31"
 __modified__   = "2026-09-13"
 
-
 from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parents[2]
 ENV_PATH = BASE_DIR / '.env'
+print(ENV_PATH)
 try:
     from dotenv import load_dotenv
     load_dotenv(dotenv_path = ENV_PATH)
+    print('success load dotenv')
 except Exception:
     pass
 
 
-from . import api
+def get_api():
+    """Lazy import of API module (requires litestar, uvicorn)."""
+    from . import api
+    return api
+
 from . import blueprint
 from . import configs
 from . import extractors
@@ -31,10 +36,10 @@ from . import transformers
 from .dataset_builder import build_dataset
 
 __all__ = ['build_dataset',
-           'api',
            'blueprint',
            'configs',
            'extractors',
            'noise',
            'pipeline',
-           'transformers',]
+           'transformers',
+           'get_api',]

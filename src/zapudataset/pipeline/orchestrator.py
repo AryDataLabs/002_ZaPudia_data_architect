@@ -32,6 +32,7 @@ Usage:
 """
 
 import sys
+import os
 import json
 import time
 import polars as pl
@@ -40,13 +41,12 @@ from   pathlib     import Path
 from   dataclasses import asdict, dataclass
 from   datetime    import datetime, timezone
 
-from ..configs          import logger
+from ..configs          import logger, PipeConfig, load_config
 from ..noise            import NoiseConfig, inject_all
 from .internal_config   import PipelineConfig
 from .stages            import (DataExtractionStage,
                                 FeatureEngineeringStage,
                                 ImplicitMatrixStage,
-                                NoiseInjectionStage,
                                 TelemetryAugmentationStage,
                                 TrainTestSplitStage,)
 
@@ -83,12 +83,15 @@ class DatasetPipeline:
         # Load and validate configuration
         logger.info("Initializing DatasetPipeline")
         config_path = (config_path or 
-                       os.getenv(DEFAULT_CONFIG_PATH) or 
+                       os.getenv('PIPELINE_CONFIG_PATH') or 
                        (base_dir / 'configs' / 'pipeconf.yaml'))
         
         self.config = PipelineConfig.from_yaml(config_path)
         self.config.validate()
         self.config.ensure_directories()
+        
+        # Also load PipeConfig for stages that need it (e.g., telemetry)
+        self.pipe_config = load_config(str(config_path), schema=PipeConfig)
         
         # Initialize stages
         self._init_stages()
@@ -106,7 +109,6 @@ class DatasetPipeline:
         self.stages = {
             "extraction": DataExtractionStage(n_jobs=self.config.n_jobs),
             "telemetry": TelemetryAugmentationStage(),
-            "noise": NoiseInjectionStage(),
             "split": TrainTestSplitStage(),
             "implicit": ImplicitMatrixStage(),
             "features": FeatureEngineeringStage(n_jobs=self.config.n_jobs),
@@ -160,8 +162,7 @@ class DatasetPipeline:
                 "Telemetry Augmentation",
                 self.stages["telemetry"].execute,
                 events=events,
-                seed=self.config.seed,
-                provinces=self.config.geo_provinces,
+                config=self.pipe_config,
             )
             
             # Stage 3: Noise Injection
@@ -177,13 +178,30 @@ class DatasetPipeline:
                 seed=self.config.seed,
             )
             
+            def _inject_noise():
+                """Apply all noise injections and persist metadata."""
+                logger.info(f"Noise config: {asdict(noise_config)}")
+                corrupted, cold_items, null_items = inject_all(
+                    events, 
+                    noise_config, 
+                    self.config.geo_provinces
+                )
+                logger.info(f"Noise injection complete:")
+                logger.info(f"  - Cold start items: {len(cold_items)}")
+                logger.info(f"  - Null items: {len(null_items)}")
+                logger.info(f"  - Output rows: {corrupted.height:,}")
+                
+                # Persist anomaly metadata
+                cold_path = self.config.output_dir / "cold_items.json"
+                null_path = self.config.output_dir / "null_items.json"
+                cold_path.write_text(json.dumps(sorted(cold_items), indent=2))
+                null_path.write_text(json.dumps(sorted(null_items), indent=2))
+                
+                return corrupted, cold_items, null_items
+            
             corrupted, cold_items, null_items = self._time_stage(
                 "Noise Injection",
-                self.stages["noise"].execute,
-                events=events,
-                config=noise_config,
-                provinces=self.config.geo_provinces,
-                output_dir=self.config.output_dir,
+                _inject_noise,
             )
             
             # Stage 4: Train/Test Split

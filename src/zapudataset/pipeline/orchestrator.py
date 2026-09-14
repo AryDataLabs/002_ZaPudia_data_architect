@@ -35,6 +35,7 @@ import sys
 import os
 import json
 import time
+import logging
 import polars as pl
 from   typing      import Any
 from   pathlib     import Path
@@ -86,6 +87,20 @@ class DatasetPipeline:
                        os.getenv('PIPELINE_CONFIG_PATH') or 
                        (base_dir / 'configs' / 'pipeconf.yaml'))
         
+        if log_level:
+            level = getattr(logging, str(log_level).upper(), None)
+            if level is None:
+                raise ValueError(f"Invalid log_level: {log_level}")
+            logger.setLevel(level)
+        if log_file:
+            log_path = Path(log_file)
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            resolved = log_path.resolve()
+            if not any(getattr(h, "baseFilename", None) == str(resolved) for h in logger.handlers):
+                handler = logging.FileHandler(resolved, encoding="utf-8")
+                handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"))
+                logger.addHandler(handler)
+
         self.config = PipelineConfig.from_yaml(config_path)
         self.config.validate()
         self.config.ensure_directories()
@@ -213,6 +228,7 @@ class DatasetPipeline:
                 min_user_interactions=self.config.min_user_interactions,
                 seed=self.config.seed,
                 output_dir=self.config.output_dir,
+                generation_config=self.config.generation,
             )
             
             # Stage 5: Implicit Matrix

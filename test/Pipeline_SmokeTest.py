@@ -52,7 +52,7 @@ def example_with_file_logging():
     log_file = log_dir / f"pipeline_{datetime.now():%Y%m%d_%H%M%S}.log"
     
     pipeline = DatasetPipeline(
-        config_path="data_pipeline/configs/pipeline_config.yaml",
+        config_path="src/zapudataset/configs/pipeconf.yaml",
         log_level="INFO",
         log_file=log_file
     )
@@ -76,7 +76,7 @@ def example_debug_mode():
     log_file = Path("logs") / f"debug_{datetime.now():%Y%m%d_%H%M%S}.log"
     
     pipeline = DatasetPipeline(
-        config_path="data_pipeline/configs/pipeline_config.yaml",
+        config_path="src/zapudataset/configs/pipeconf.yaml",
         log_level="DEBUG",  # Maximum verbosity
         log_file=log_file
     )
@@ -96,7 +96,7 @@ def example_custom_config():
     logger.debug("="*80 + "\n")
     
     # You can create different configs for different experiments
-    custom_config = "data_pipeline/configs/pipeline_config_experiment.yaml"
+    custom_config = "src/zapudataset/configs/pipeconf.yaml"  # Use main config for now
     
     pipeline = DatasetPipeline(
         config_path=custom_config,

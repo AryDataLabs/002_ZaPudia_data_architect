@@ -41,7 +41,7 @@ from   dataclasses import asdict, dataclass
 from   datetime    import datetime, timezone
 
 from ..configs          import logger
-from ..anomaly_injector import NoiseConfig
+from ..noise            import NoiseConfig, inject_all
 from .internal_config   import PipelineConfig
 from .stages            import (DataExtractionStage,
                                 FeatureEngineeringStage,
@@ -49,6 +49,8 @@ from .stages            import (DataExtractionStage,
                                 NoiseInjectionStage,
                                 TelemetryAugmentationStage,
                                 TrainTestSplitStage,)
+
+base_dir = Path(__file__).resolve().parents[1]
 
 @dataclass
 class PipelineMetrics:
@@ -76,10 +78,14 @@ class DatasetPipeline:
     """
     def __init__(
         self,
-        config_path: str | Path = "/configs/pipeconf.yaml",
+        config_path: str | Path = None,
     ):
         # Load and validate configuration
         logger.info("Initializing DatasetPipeline")
+        config_path = (config_path or 
+                       os.getenv(DEFAULT_CONFIG_PATH) or 
+                       (base_dir / 'configs' / 'pipeconf.yaml'))
+        
         self.config = PipelineConfig.from_yaml(config_path)
         self.config.validate()
         self.config.ensure_directories()

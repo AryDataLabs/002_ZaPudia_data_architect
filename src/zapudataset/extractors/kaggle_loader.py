@@ -19,6 +19,7 @@ Vectorized with Polars; no Python row-level loops on hot paths.
 
 import polars as pl
 from pathlib  import Path
+from glob import glob
 
 _KAGGLE_BEHAVIOR_SCHEMA = pl.Schema(
     {"event_time"     : pl.Datetime("ms"),
@@ -63,6 +64,14 @@ def load_kaggle_behavior(
     Backfills ``engagement_time_msec`` is left NULL here; the GA4 join and the
     session dwell backfill (§1.2.3 rule 2) fill it downstream.
     """
+    # Validate data sources exist
+    files = glob(path_pattern)
+    if not files:
+        raise FileNotFoundError(
+            f"No parquet files found matching pattern: {path_pattern}\n"
+            f"Please download Kaggle datasets first or check your config paths.\n"
+            f"Expected location: data/raw/kaggle_behavior/*.parquet"
+        )
     return (
         pl.scan_parquet(path_pattern, 
                         schema = _KAGGLE_BEHAVIOR_SCHEMA)
@@ -110,6 +119,14 @@ def load_kaggle_orders(
     Each order row becomes a single ``purchase`` event enriched with LTV,
     fulfillment status, discount flag, age band and province.
     """
+    # Validate data sources exist
+    files = glob(path_pattern)
+    if not files:
+        raise FileNotFoundError(
+            f"No parquet files found matching pattern: {path_pattern}\n"
+            f"Please download Kaggle datasets first or check your config paths.\n"
+            f"Expected location: data/raw/kaggle_orders/*.parquet"
+        )
     region_to_province = region_to_province or dict()
     return (
         pl.scan_parquet(path_pattern,

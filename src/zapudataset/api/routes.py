@@ -48,8 +48,7 @@ async def run_pipeline_async(job_id: str, config_path: str) -> None:
             )
             return pipeline.run()
 
-        loop = asyncio.get_event_loop()
-        manifest = await loop.run_in_executor(None, run_sync)
+        manifest = await asyncio.to_thread(run_sync)
 
         await job_store.update_job(
             job_id,
@@ -84,6 +83,7 @@ async def root() -> dict[str, Any]:
             "list": "GET /pipeline/jobs",
             "manifest": "GET /pipeline/jobs/{job_id}/manifest",
             "logs": "GET /pipeline/jobs/{job_id}/logs",
+            "outputs": "GET /pipeline/jobs/{job_id}/outputs",
         },
     }
 
@@ -102,7 +102,7 @@ async def trigger_pipeline(data: dict[str, Any]) -> Response[dict[str, Any]]:
     """Trigger a new pipeline run."""
     config_path = data.get(
         "config_path",
-        "data_pipeline/configs/pipeconf.yaml"
+        "src/zapudataset/configs/pipeconf.yaml"
     )
 
     if not Path(config_path).exists():
@@ -183,6 +183,32 @@ async def get_job_manifest(job_id: str) -> dict[str, Any]:
         )
 
     return job.manifest
+
+
+@get("/pipeline/jobs/{job_id:str}/outputs")
+async def get_job_outputs(job_id: str) -> dict[str, Any]:
+    """Return generated dataset files with existence, row count and byte size."""
+    job = await job_store.get_job(job_id)
+    if not job:
+        raise NotFoundException(f"Job {job_id} not found")
+    if not job.manifest:
+        return {"job_id": job_id, "status": job.status.value, "outputs": {}}
+
+    outputs = {}
+    for name, raw_path in job.manifest.get("outputs", {}).items():
+        path = Path(raw_path)
+        info = {"path": str(path), "exists": path.exists(), "size_bytes": 0}
+        if path.exists():
+            info["size_bytes"] = path.stat().st_size
+            if path.suffix == ".parquet":
+                try:
+                    import duckdb
+                    info["rows"] = int(duckdb.connect().execute(
+                        "SELECT count(*) FROM read_parquet(?)", [str(path)]).fetchone()[0])
+                except Exception as exc:
+                    info["rows_error"] = str(exc)
+        outputs[name] = info
+    return {"job_id": job_id, "status": job.status.value, "outputs": outputs}
 
 
 @get("/pipeline/jobs/{job_id:str}/logs")

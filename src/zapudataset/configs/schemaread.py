@@ -84,6 +84,14 @@ class LoggingConfig(BaseModel):
     level    : str = Field(default     = "INFO",
                            pattern     = "^(DEBUG|INFO|WARNING|ERROR|CRITICAL)$")
 
+class GenerationConfig(BaseModel):
+    bootstrap_users: int = Field(default=20_000, ge=1)
+    interactions_per_user: int = Field(default=25, ge=1)
+    item_count: int = Field(default=50_000, ge=100)
+    min_train_mb: float = Field(default=100.0, ge=0)
+    min_test_mb: float = Field(default=100.0, ge=0)
+    max_growth_rounds: int = Field(default=8, ge=1)
+
 class PipeConfig(BaseModel):
     pipeline               : PipelineMeta
     logging                : LoggingConfig = Field(default_factory = LoggingConfig)
@@ -95,6 +103,7 @@ class PipeConfig(BaseModel):
     session                : SessionConfig
     geo_provinces          : List[str]
     categories             : Dict[str, List[str]]
+    generation             : GenerationConfig = Field(default_factory=GenerationConfig)
 
 def SchemaRead(confpath:Path = None):
     '''

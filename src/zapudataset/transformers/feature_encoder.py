@@ -92,10 +92,13 @@ def build_item_features(
 
 
 def build_user_features(
-    events: pl.DataFrame,
-    out_path: str | Path,
-) -> tuple[Path, dict[str, Any]]:
-    """Build user_features.parquet with ordinal-encoded categorical indexes."""
+        events   : pl.DataFrame,
+        out_path : str | Path,
+    ) -> tuple[Path, dict[str, Any]]:
+    """
+    Build user_features.parquet with 
+    ordinal-encoded categorical indexes.
+    """
     users = (
         events.group_by(pl.col("user_id"))
         .agg(
@@ -103,24 +106,17 @@ def build_user_features(
             pl.col("geo_province").first(),
             pl.col("device_category").first(),
             pl.col("customer_ltv").first(),
-            pl.len().alias("interaction_count"),
-        )
-    )
-
+            pl.len().alias("interaction_count"),))
     users, age_map = _ordinal_encode(users, "age_band", "age_band_idx")
     users, geo_map = _ordinal_encode(users, "geo_province", "geo_province_idx")
     users, dev_map = _ordinal_encode(users, "device_category", "device_idx")
-
-    out_path = Path(out_path)
+    out_path       = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     users.write_parquet(out_path)
-
-    maps = {
-        "age_band_idx": age_map,
-        "geo_province_idx": geo_map,
-        "device_idx": dev_map,
-    }
-    map_path = out_path.with_suffix(".encoders.json")
+    maps           = {"age_band_idx": age_map,
+                       "geo_province_idx": geo_map,
+                       "device_idx": dev_map,}
+    map_path       = out_path.with_suffix(".encoders.json")
     map_path.write_text(json.dumps(maps))
     return out_path, maps
 

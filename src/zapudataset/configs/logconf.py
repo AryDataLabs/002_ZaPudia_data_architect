@@ -33,8 +33,8 @@ def logconfig(config_path: str = None):
     Defaults to 'pipeconf.yaml' in same directory.
     """
     config_path = (config_path or 
-                  os.getenv(DEFAULT_CONFIG_PATH) or 
-                  (base_dir / 'pipeconf.yaml'))
+                   os.getenv(DEFAULT_CONFIG_PATH) or 
+                   (base_dir / 'pipeconf.yaml'))
     try:
         cfg: PipeConfig = load_config(
                           str(config_path), 
@@ -44,19 +44,25 @@ def logconfig(config_path: str = None):
         print(f"WARNING: Failed to load config from {config_path}: {e}")
         print("Using default logging configuration.")
         log_config = None
-    date_str    = datetime.now().strftime('%Y%m%d')
-    log_dir     = log_config.logpath if log_config \
-                  else str(base_dir.parents[2]/'artifacts'/'logs'/date_str)
+    date_str           = datetime.now().strftime('%Y%m%d')
+    custom_log_dir     = None
+    if log_config:
+        custom_log_dir = (getattr(log_config, 'log_path', None) or 
+                          getattr(log_config, 'log_dir', None) or 
+                          getattr(log_config, 'logpath', None))
+    log_dir = custom_log_dir if custom_log_dir \
+              else str(base_dir.parents[2] / 'artifacts' / 'logs' / date_str)
     Path(log_dir).mkdir(parents = True, exist_ok = True)
-    log_name    = log_config.log_file if log_config else 'app.log'
-    log_level   = log_config.level if log_config else 'INFO'
+    log_name    = getattr(log_config, 'log_file', 'app.log') if log_config else 'app.log'
+    log_level   = getattr(log_config, 'level', 'INFO') if log_config else 'INFO'
     log_path    = str(Path(log_dir) / log_name)
     log_format  = '%(asctime)s - %(filename)s - %(funcName)s - %(message)s'
     logging.basicConfig(
         level   = getattr(logging, log_level, logging.INFO),
         format  = log_format,
         handlers= [logging.FileHandler(log_path),
-                   logging.StreamHandler(sys.stdout)])
+                   logging.StreamHandler(sys.stdout)],
+        force   = True)
     logging.getLogger('matplotlib').setLevel(logging.WARNING)
     logging.getLogger('graphviz').setLevel(logging.WARNING)
     logger = logging.getLogger(__name__)

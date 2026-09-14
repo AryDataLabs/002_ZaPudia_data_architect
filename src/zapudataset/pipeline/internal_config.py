@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 
 __author__     = "Aryanto"
 __copyright__  = "Copyright 2026, AryDataLabs/ZaPuDia Series"
@@ -60,6 +61,9 @@ class PipelineConfig:
     norm_min                : float
     norm_max                : float
     
+    # Data generation / minimum artifact sizes
+    generation: dict[str, Any] = field(default_factory=dict)
+
     # Parallelization
     n_jobs : int = -1
 
@@ -123,26 +127,36 @@ class PipelineConfig:
         norm_max             = cfg["implicit_normalization"]["max_rating"],
         
         # Parallelization
-        n_jobs               = cfg.get("n_jobs", -1),)
+        generation          = cfg.get("generation", {}),
+        n_jobs               = int(cfg.get("n_jobs", -1)))
 
 
     def ensure_directories(self) -> None:
         """Create output and intermediate directories if they don't exist."""
         for directory in [self.output_dir, self.intermediate_dir]:
-            directory.mkdir(parents=True, exist_ok=True)
+            directory.mkdir(parents = True, exist_ok = True)
             logger.debug(f"Ensured directory exists: {directory}")
 
 
     def validate(self) -> None:
         if not 0 <= self.test_fraction <= 1:
-            raise ValueError(f"test_fraction must be in [0, 1], got {self.test_fraction}")
+            raise ValueError(
+            f"test_fraction must be in [0, 1], "
+            f"got {self.test_fraction}")
         if self.min_user_interactions < 1:
-            raise ValueError(f"min_user_interactions must be >= 1, got {self.min_user_interactions}")
+            raise ValueError(
+            f"min_user_interactions must be >= 1, "
+            f"got {self.min_user_interactions}")
         if not 0 <= self.telemetry_drop_rate <= 1:
-            raise ValueError(f"telemetry_drop_rate must be in [0, 1], got {self.telemetry_drop_rate}")
+            raise ValueError(
+            f"telemetry_drop_rate must be in [0, 1], "
+            f"got {self.telemetry_drop_rate}")
         if not 0 <= self.bot_fraction <= 1:
-            raise ValueError(f"bot_fraction must be in [0, 1], got {self.bot_fraction}")
+            raise ValueError(
+            f"bot_fraction must be in [0, 1], "
+            f"got {self.bot_fraction}.")
         logger.info("Configuration validation passed")
+
 
 if __name__ == '__main__':
     pass

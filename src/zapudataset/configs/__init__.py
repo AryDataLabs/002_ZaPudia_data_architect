@@ -1,18 +1,5 @@
 #!/usr/bin/env python3
 
-"""ZaPuDia Data Pipeline Infrastructure & Configuration Package.
-
-This package provides production-grade configuration parsing, environment variable 
-interpolation, Pydantic V2 schema validation, and centralized logging management 
-for the ZaPuDia Unified Dataset build pipeline.
-
-Example:
-    >>> from data_pipeline import load_config, PipeConfig, logconfig
-    >>> logger = logconfig()
-    >>> config = load_config("configs/pipeconf.yaml", schema=PipeConfig)
-    >>> logger.info("Initialized pipeline: %s v%s", config.pipeline.name, config.pipeline.version)
-"""
-
 __author__     = "Aryanto"
 __copyright__  = "Copyright 2026, AryDataLabs/ZaPuDia Series"
 __credits__    = ["aryanto"]

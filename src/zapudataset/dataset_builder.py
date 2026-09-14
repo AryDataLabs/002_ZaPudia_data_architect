@@ -33,10 +33,12 @@ from   datetime    import datetime, timezone
 from   pathlib     import Path
 from   typing      import Any
 
-from .noise        import NoiseConfig, inject_all
+from .noise        import  NoiseConfig, inject_all
+from .configs      import PipeConfig
 from .extractors   import (simulate_ga4_events,
                            load_kaggle_behavior,
                            load_kaggle_orders)
+from .generation   import ensure_nonempty_events, grow_split_to_size
 from .transformers import (build_item_features, 
                            build_user_features, 
                            write_implicit_matrix)
@@ -50,7 +52,7 @@ def _ensure_dirs(*paths: str | Path) -> None:
     for p in paths:
         Path(p).mkdir(parents=True, exist_ok=True)
 
-def build_dataset(config_path: str | Path = "data_pipeline/configs/pipeconf.yaml") -> dict[str, Any]:
+def build_dataset(config_path: str | Path = "src/zapudataset/configs/pipeconf.yaml") -> dict[str, Any]:
     """Run the full pipeline. Returns a build manifest dict."""
     cfg     = _load_config(config_path)
     seed    = cfg["pipeline"]["seed"]
@@ -64,9 +66,10 @@ def build_dataset(config_path: str | Path = "data_pipeline/configs/pipeconf.yaml
                cfg["sources"]["kaggle_behavior"]["event_type_map"],)
     orders = load_kaggle_orders(cfg["sources"]["kaggle_orders"]["path"])
     events = pl.concat([behavior, orders], how="vertical_relaxed").collect()
+    events = ensure_nonempty_events(events, cfg)
 
     # ---- 2. Augment with GA4 telemetry ----
-    events = simulate_ga4_events(events, seed=seed, provinces=cfg["geo_provinces"])
+    events = simulate_ga4_events(events, config=load_config(str(config_path), schema=PipeConfig))
 
     # ---- 3. Noise injection (§2) ----
     ncfg = NoiseConfig(
@@ -95,8 +98,7 @@ def build_dataset(config_path: str | Path = "data_pipeline/configs/pipeconf.yaml
     test       = corrupted.filter(pl.col("user_id").is_in(list(test_users)))
     train_path = out_dir / "train_interactions.parquet"
     test_path  = out_dir / "test_interactions.parquet"
-    train.write_parquet(train_path)
-    test.write_parquet(test_path)
+    train, test = grow_split_to_size(train, test, train_path, test_path, cfg)
 
     # ---- 5. Implicit matrix (DuckDB) ----
     weights       = cfg["implicit_weights"]
@@ -136,6 +138,18 @@ def build_dataset(config_path: str | Path = "data_pipeline/configs/pipeconf.yaml
         "built_at"       : datetime.now(timezone.utc).isoformat(),}
     (out_dir / "build_manifest.json").write_text(json.dumps(manifest, indent=2))
     return manifest
+
+
+class DatasetBuilder:
+    """Backward-compatible facade around :func:`build_dataset`."""
+    def __init__(self, config_path: str | Path = "src/zapudataset/configs/pipeconf.yaml") -> None:
+        self.config_path = config_path
+
+    def build(self) -> dict[str, Any]:
+        return build_dataset(self.config_path)
+
+    def run(self) -> dict[str, Any]:
+        return self.build()
 
 
 if __name__ == "__main__":

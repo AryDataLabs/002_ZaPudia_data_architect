@@ -40,6 +40,11 @@ dependencies  = ["polars>=0.18.0",
                  "gunicorn>=21.2.0",
                  "python-dotenv>=1.0.0",
                  "orjson>=3.9.0",
+                 "google-auth>=2.20.0",
+                 "google-cloud-bigquery>=3.10.0",
+                 "google-api-python-client>=2.90.0",
+                 "kaggle>=1.5.16",
+                 "duckdb>=0.8.0",
                  "uvloop>=0.17.0; sys_platform != 'win32'",]
 
 [project.optional-dependencies]
@@ -82,9 +87,7 @@ asyncio_mode   = "auto"
 
 [tool.setuptools.packages.find]
 where   = ["src"]
-include = ["pipeline*", "extractors*", 
-           "transformers*", "noise*", 
-           "api*", "configs*", "blueprint*"]
+include = ["zapudataset*"]
 
 [tool.setuptools.package-data]
 "*"     = ["*.so", "*.pyd", "*.pxd", "*.pyx",

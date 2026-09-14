@@ -11,5 +11,5 @@ __created__    = "2026-08-31"
 __modified__   = "2026-09-13"
 
 
-from transformers.implicit_builder import build_implicit_matrix
-from transformers.feature_encoder  import build_item_features, build_user_features
+from .implicit_builder import build_implicit_matrix, write_implicit_matrix
+from .feature_encoder  import build_item_features, build_user_features

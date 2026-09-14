@@ -18,8 +18,8 @@ Vectorized with Polars; no Python row-level loops on hot paths.
 """
 
 import polars as pl
-from typing import Any
-from pathlib import Path
+from pathlib  import Path
+from glob import glob
 
 _KAGGLE_BEHAVIOR_SCHEMA = pl.Schema(
     {"event_time"     : pl.Datetime("ms"),
@@ -64,12 +64,20 @@ def load_kaggle_behavior(
     Backfills ``engagement_time_msec`` is left NULL here; the GA4 join and the
     session dwell backfill (§1.2.3 rule 2) fill it downstream.
     """
+    # Validate data sources exist
+    files = glob(path_pattern)
+    if not files:
+        raise FileNotFoundError(
+            f"No parquet files found matching pattern: {path_pattern}\n"
+            f"Please download Kaggle datasets first or check your config paths.\n"
+            f"Expected location: data/raw/kaggle_behavior/*.parquet"
+        )
     return (
         pl.scan_parquet(path_pattern, 
                         schema = _KAGGLE_BEHAVIOR_SCHEMA)
         .with_columns(
             pl.col("event_time").cast(pl.Datetime("ms")
-            ).dt.epoch_time_unit("ms").alias("event_time_ms"),
+            ).dt.timestamp(time_unit="ms").alias("event_time_ms"),
             pl.col("event_type").replace_strict(event_type_map, 
             default = None).alias("event_type"),
             pl.col("price").cast(pl.Float64),
@@ -111,13 +119,21 @@ def load_kaggle_orders(
     Each order row becomes a single ``purchase`` event enriched with LTV,
     fulfillment status, discount flag, age band and province.
     """
+    # Validate data sources exist
+    files = glob(path_pattern)
+    if not files:
+        raise FileNotFoundError(
+            f"No parquet files found matching pattern: {path_pattern}\n"
+            f"Please download Kaggle datasets first or check your config paths.\n"
+            f"Expected location: data/raw/kaggle_orders/*.parquet"
+        )
     region_to_province = region_to_province or dict()
     return (
         pl.scan_parquet(path_pattern,
                         schema = _KAGGLE_ORDER_SCHEMA)
         .with_columns(
             pl.col("order_timestamp").cast(pl.Datetime("ms")
-            ).dt.epoch_time_unit("ms").alias("event_time"),
+            ).dt.timestamp(time_unit="ms").alias("event_time"),
             pl.lit("purchase").alias("event_type"),
             pl.col("customer_id").cast(pl.Utf8).alias("user_id"),
             pl.lit(None, dtype=pl.Utf8).alias("user_pseudo_id"),
@@ -153,20 +169,24 @@ def load_kaggle_orders(
                 "customer_ltv", 
                 "age_band",))
 
+
 def harmonize_kaggle(
-        behavior_pattern  : str,
-        order_pattern     : str,
-        event_type_map    : dict[str, str],
-        region_to_province: dict[str, str] | None = None,
-        out_path          : Any[str, Path] = None,
+        behavior_pattern   : str,
+        order_pattern      : str,
+        event_type_map     : dict[str, str],
+        region_to_province : dict[str, str] | None = None,
+        out_path           : str | Path | None = None,
     ) -> Path:
     """
     Concatenate behavior + order streams into 
-    one harmonized parquet file."""
+    one harmonized parquet file.
+    """
     behavior = load_kaggle_behavior(behavior_pattern, event_type_map)
     orders   = load_kaggle_orders(order_pattern, region_to_province)
     unified  = pl.concat([behavior.collect_schema(), orders.collect_schema()])
     combined = pl.concat([behavior, orders], how="vertical_relaxed")
+    if out_path is None:
+        raise ValueError("out_path tidak boleh None")
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     combined.sink_parquet(out_path)

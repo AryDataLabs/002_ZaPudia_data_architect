@@ -87,9 +87,7 @@ asyncio_mode   = "auto"
 
 [tool.setuptools.packages.find]
 where   = ["src"]
-include = ["pipeline*", "extractors*", 
-           "transformers*", "noise*", 
-           "api*", "configs*", "blueprint*"]
+include = ["zapudataset*"]
 
 [tool.setuptools.package-data]
 "*"     = ["*.so", "*.pyd", "*.pxd", "*.pyx",

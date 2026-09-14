@@ -58,7 +58,7 @@ from pipeline_orchestrator import DatasetPipeline
 
 # Initialize and run
 pipeline = DatasetPipeline(
-    config_path="data_pipeline/configs/pipeconf.yaml",
+    config_path="src/zapudataset/configs/pipeconf.yaml",
     log_level="INFO"
 )
 

@@ -61,6 +61,9 @@ class PipelineConfig:
     norm_min                : float
     norm_max                : float
     
+    # Data generation / minimum artifact sizes
+    generation: dict[str, Any] = field(default_factory=dict)
+
     # Parallelization
     n_jobs : int = -1
 
@@ -124,7 +127,8 @@ class PipelineConfig:
         norm_max             = cfg["implicit_normalization"]["max_rating"],
         
         # Parallelization
-        n_jobs               = cfg.get("n_jobs", -1),)
+        generation          = cfg.get("generation", {}),
+        n_jobs               = int(cfg.get("n_jobs", -1)))
 
 
     def ensure_directories(self) -> None:

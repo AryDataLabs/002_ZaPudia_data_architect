@@ -24,13 +24,14 @@ from   pathlib import Path
 
 
 def build_implicit_matrix(
-    events_parquet_path: str | Path,
-    weights: dict[str, float],
-    norm_min: float = 1.0,
-    norm_max: float = 5.0,
-) -> pl.DataFrame:
-    """Execute the DuckDB implicit-rating query and return a Polars frame.
-
+        events_parquet_path: str | Path,
+        weights            : dict[str, float],
+        norm_min           : float = 1.0,
+        norm_max           : float = 5.0,
+    ) -> pl.DataFrame:
+    """
+    Execute the DuckDB implicit-rating 
+    query and return a Polars frame.
     Columns: user_id, item_id, raw_score, pseudo_rating.
     """
     conn = duckdb.connect()

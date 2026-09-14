@@ -68,7 +68,7 @@ def load_kaggle_behavior(
                         schema = _KAGGLE_BEHAVIOR_SCHEMA)
         .with_columns(
             pl.col("event_time").cast(pl.Datetime("ms")
-            ).dt.epoch_time_unit("ms").alias("event_time_ms"),
+            ).dt.timestamp(time_unit="ms").alias("event_time_ms"),
             pl.col("event_type").replace_strict(event_type_map, 
             default = None).alias("event_type"),
             pl.col("price").cast(pl.Float64),
@@ -116,7 +116,7 @@ def load_kaggle_orders(
                         schema = _KAGGLE_ORDER_SCHEMA)
         .with_columns(
             pl.col("order_timestamp").cast(pl.Datetime("ms")
-            ).dt.epoch_time_unit("ms").alias("event_time"),
+            ).dt.timestamp(time_unit="ms").alias("event_time"),
             pl.lit("purchase").alias("event_type"),
             pl.col("customer_id").cast(pl.Utf8).alias("user_id"),
             pl.lit(None, dtype=pl.Utf8).alias("user_pseudo_id"),

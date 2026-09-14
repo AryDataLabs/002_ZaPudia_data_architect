@@ -107,25 +107,23 @@ class TelemetryAugmentationStage(PipelineStage):
     def execute(
         self,
         events: pl.DataFrame,
-        seed: int,
-        provinces: list[str],
+        config: Any,
     ) -> pl.DataFrame:
         """Add GA4 telemetry fields to events.
         
         Args:
             events: Input events DataFrame
-            seed: Random seed for reproducibility
-            provinces: List of geographic provinces
+            config: PipeConfig object containing seed and provinces
             
         Returns:
             Events with GA4 telemetry fields
         """
         self.log_start()
         
-        logger.info(f"Simulating GA4 events with seed={seed}")
+        logger.info(f"Simulating GA4 events with seed={config.pipeline.seed}")
         logger.debug(f"Input shape: {events.shape}")
         
-        augmented = simulate_ga4_events(events, seed=seed, provinces=provinces)
+        augmented = simulate_ga4_events(events, config=config)
         
         logger.info(f"Added telemetry fields: {set(augmented.columns) - set(events.columns)}")
         self.log_end(f"Output shape: {augmented.shape}")

@@ -14,9 +14,12 @@ __modified__   = "2026-09-13"
 from .internal_config import PipelineConfig
 from .orchestrator    import DatasetPipeline, Orchestrator
 from .stages          import FeatureEngineeringStage, ImplicitMatrixStage
+from .generation      import ensure_nonempty_events, grow_split_to_size
 
 __all__ = ['PipelineConfig',
            'DatasetPipeline',
            'Orchestrator',
            'FeatureEngineeringStage',
+           'ensure_nonempty_events', 
+           'grow_split_to_size',
            'ImplicitMatrixStage',]

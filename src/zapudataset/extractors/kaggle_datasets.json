@@ -1,0 +1,304 @@
+{
+  "kaggle_datasets": [
+    {
+      "id": "kgurl-01",
+      "name": "ecommerce-behavior-data-from-multi-category-store",
+      "address": "mkechinov/ecommerce-behavior-data-from-multi-category-store",
+      "url": "https://www.kaggle.com/datasets/mkechinov/ecommerce-behavior-data-from-multi-category-store"
+    },
+    {
+      "id": "kgurl-02",
+      "name": "ecommerce-purchase-history-from-electronics-store",
+      "address": "mkechinov/ecommerce-purchase-history-from-electronics-store",
+      "url": "https://www.kaggle.com/datasets/mkechinov/ecommerce-purchase-history-from-electronics-store"
+    },
+    {
+      "id": "kgurl-03",
+      "name": "direct-messaging",
+      "address": "mkechinov/direct-messaging",
+      "url": "https://www.kaggle.com/datasets/mkechinov/direct-messaging"
+    },
+    {
+      "id": "kgurl-04",
+      "name": "ecommerce-events-history-in-cosmetics-shop",
+      "address": "mkechinov/ecommerce-events-history-in-cosmetics-shop",
+      "url": "https://www.kaggle.com/datasets/mkechinov/ecommerce-events-history-in-cosmetics-shop"
+    },
+    {
+      "id": "kgurl-05",
+      "name": "ecommerce",
+      "address": "shreypachauri123/ecommerce",
+      "url": "https://www.kaggle.com/datasets/shreypachauri123/ecommerce"
+    },
+    {
+      "id": "kgurl-06",
+      "name": "ecommerce-behavior-oct-nov-2019",
+      "address": "vanhaminhquan/ecommerce-behavior-oct-nov-2019",
+      "url": "https://www.kaggle.com/datasets/vanhaminhquan/ecommerce-behavior-oct-nov-2019"
+    },
+    {
+      "id": "kgurl-07",
+      "name": "ecommerce-sales-dataset",
+      "address": "abbas829/ecommerce-sales-dataset",
+      "url": "https://www.kaggle.com/datasets/abbas829/ecommerce-sales-dataset"
+    },
+    {
+      "id": "kgurl-08",
+      "name": "product-item-data",
+      "address": "cclark/product-item-data",
+      "url": "https://www.kaggle.com/datasets/cclark/product-item-data"
+    },
+    {
+      "id": "kgurl-09",
+      "name": "flipkart-fasion-products-dataset",
+      "address": "aaditshukla/flipkart-fasion-products-dataset",
+      "url": "https://www.kaggle.com/datasets/aaditshukla/flipkart-fasion-products-dataset"
+    },
+    {
+      "id": "kgurl-10",
+      "name": "ecommerce-customer-service-satisfaction",
+      "address": "ddosad/ecommerce-customer-service-satisfaction",
+      "url": "https://www.kaggle.com/datasets/ddosad/ecommerce-customer-service-satisfaction"
+    },
+    {
+      "id": "kgurl-11",
+      "name": "ecommerce-customer-behavior-dataset",
+      "address": "dhairyajeetsingh/ecommerce-customer-behavior-dataset",
+      "url": "https://www.kaggle.com/datasets/dhairyajeetsingh/ecommerce-customer-behavior-dataset"
+    },
+    {
+      "id": "kgurl-12",
+      "name": "ecommerce-consumer-behavior-analysis-data",
+      "address": "salahuddinahmedshuvo/ecommerce-consumer-behavior-analysis-data",
+      "url": "https://www.kaggle.com/datasets/salahuddinahmedshuvo/ecommerce-consumer-behavior-analysis-data"
+    },
+    {
+      "id": "kgurl-13",
+      "name": "brazilian-ecommerce",
+      "address": "olistbr/brazilian-ecommerce",
+      "url": "https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce"
+    },
+    {
+      "id": "kgurl-14",
+      "name": "ecommerce-data",
+      "address": "carrie1/ecommerce-data",
+      "url": "https://www.kaggle.com/datasets/carrie1/ecommerce-data"
+    },
+    {
+      "id": "kgurl-15",
+      "name": "ecommerce-dataset",
+      "address": "retailrocket/ecommerce-dataset",
+      "url": "https://www.kaggle.com/datasets/retailrocket/ecommerce-dataset"
+    },
+    {
+      "id": "kgurl-16",
+      "name": "womens-ecommerce-clothing-reviews",
+      "address": "nicapotato/womens-ecommerce-clothing-reviews",
+      "url": "https://www.kaggle.com/datasets/nicapotato/womens-ecommerce-clothing-reviews"
+    },
+    {
+      "id": "kgurl-17",
+      "name": "customer-analytics",
+      "address": "prachi13/customer-analytics",
+      "url": "https://www.kaggle.com/datasets/prachi13/customer-analytics"
+    },
+    {
+      "id": "kgurl-18",
+      "name": "ecommerce-customer-churn-analysis-and-prediction",
+      "address": "ankitverma2010/ecommerce-customer-churn-analysis-and-prediction",
+      "url": "https://www.kaggle.com/datasets/ankitverma2010/ecommerce-customer-churn-analysis-and-prediction"
+    },
+    {
+      "id": "kgurl-19",
+      "name": "supermarket-sales",
+      "address": "aungpyaeap/supermarket-sales",
+      "url": "https://www.kaggle.com/datasets/aungpyaeap/supermarket-sales"
+    },
+    {
+      "id": "kgurl-20",
+      "name": "online-shopping-dataset",
+      "address": "bytewallet/online-shopping-dataset",
+      "url": "https://www.kaggle.com/datasets/bytewallet/online-shopping-dataset"
+    },
+    {
+      "id": "kgurl-21",
+      "name": "amazon-products-dataset-2023",
+      "address": "lokeshparab/amazon-products-dataset-2023",
+      "url": "https://www.kaggle.com/datasets/lokeshparab/amazon-products-dataset-2023"
+    },
+    {
+      "id": "kgurl-22",
+      "name": "amazon-product-data",
+      "address": "promptcloud/amazon-product-data",
+      "url": "https://www.kaggle.com/datasets/promptcloud/amazon-product-data"
+    },
+    {
+      "id": "kgurl-23",
+      "name": "grocery-sales-dataset",
+      "address": "andrexibiza/grocery-sales-dataset",
+      "url": "https://www.kaggle.com/datasets/andrexibiza/grocery-sales-dataset"
+    },
+    {
+      "id": "kgurl-24",
+      "name": "walmart-sales-dataset",
+      "address": "dheerajmp/walmart-sales-dataset",
+      "url": "https://www.kaggle.com/datasets/dheerajmp/walmart-sales-dataset"
+    },
+    {
+      "id": "kgurl-25",
+      "name": "market-basket-analysis",
+      "address": "aslanahmedov/market-basket-analysis",
+      "url": "https://www.kaggle.com/datasets/aslanahmedov/market-basket-analysis"
+    },
+    {
+      "id": "kgurl-26",
+      "name": "online-retail-dataset",
+      "address": "lakshmi25npathi/online-retail-dataset",
+      "url": "https://www.kaggle.com/datasets/lakshmi25npathi/online-retail-dataset"
+    },
+    {
+      "id": "kgurl-27",
+      "name": "transaction-data",
+      "address": "vipin20/transaction-data",
+      "url": "https://www.kaggle.com/datasets/vipin20/transaction-data"
+    },
+    {
+      "id": "kgurl-28",
+      "name": "sales-forecasting",
+      "address": "rohitsahoo/sales-forecasting",
+      "url": "https://www.kaggle.com/datasets/rohitsahoo/sales-forecasting"
+    },
+    {
+      "id": "kgurl-29",
+      "name": "customer-segmentation-data",
+      "address": "shelvikanwar/customer-segmentation-data",
+      "url": "https://www.kaggle.com/datasets/shelvikanwar/customer-segmentation-data"
+    },
+    {
+      "id": "kgurl-30",
+      "name": "retail-sales-dataset",
+      "address": "akashdeepkuila/retail-sales-dataset",
+      "url": "https://www.kaggle.com/datasets/akashdeepkuila/retail-sales-dataset"
+    },
+    {
+      "id": "kgurl-31",
+      "name": "ecommerce-data",
+      "address": "benroshan/ecommerce-data",
+      "url": "https://www.kaggle.com/datasets/benroshan/ecommerce-data"
+    },
+    {
+      "id": "kgurl-32",
+      "name": "the-ultimate-ecommerce-dataset",
+      "address": "kashishrastogi/the-ultimate-ecommerce-dataset",
+      "url": "https://www.kaggle.com/datasets/kashishrastogi/the-ultimate-ecommerce-dataset"
+    },
+    {
+      "id": "kgurl-33",
+      "name": "flipkart-products",
+      "address": "pranitkothari/flipkart-products",
+      "url": "https://www.kaggle.com/datasets/pranitkothari/flipkart-products"
+    },
+    {
+      "id": "kgurl-34",
+      "name": "amazon-products-sales-dataset-2023",
+      "address": "griksh/amazon-products-sales-dataset-2023",
+      "url": "https://www.kaggle.com/datasets/griksh/amazon-products-sales-dataset-2023"
+    },
+    {
+      "id": "kgurl-35",
+      "name": "customer-churn-rate-dataset",
+      "address": "suraj520/customer-churn-rate-dataset",
+      "url": "https://www.kaggle.com/datasets/suraj520/customer-churn-rate-dataset"
+    },
+    {
+      "id": "kgurl-36",
+      "name": "customer-segmentation",
+      "address": "fabiendaniel/customer-segmentation",
+      "url": "https://www.kaggle.com/datasets/fabiendaniel/customer-segmentation"
+    },
+    {
+      "id": "kgurl-37",
+      "name": "retail-sales-dataset",
+      "address": "manjeetsingh/retail-sales-dataset",
+      "url": "https://www.kaggle.com/datasets/manjeetsingh/retail-sales-dataset"
+    },
+    {
+      "id": "kgurl-38",
+      "name": "e-commerce-dataset",
+      "address": "shivan118/e-commerce-dataset",
+      "url": "https://www.kaggle.com/datasets/shivan118/e-commerce-dataset"
+    },
+    {
+      "id": "kgurl-39",
+      "name": "walmart-store-sales",
+      "address": "buntly/walmart-store-sales",
+      "url": "https://www.kaggle.com/datasets/buntly/walmart-store-sales"
+    },
+    {
+      "id": "kgurl-40",
+      "name": "online-retail-ii-uci",
+      "address": "mashlyn/online-retail-ii-uci",
+      "url": "https://www.kaggle.com/datasets/mashlyn/online-retail-ii-uci"
+    },
+    {
+      "id": "kgurl-41",
+      "name": "e-commerce-dataset",
+      "address": "saurogr/e-commerce-dataset",
+      "url": "https://www.kaggle.com/datasets/saurogr/e-commerce-dataset"
+    },
+    {
+      "id": "kgurl-42",
+      "name": "onlineretail",
+      "address": "vijayuv/onlineretail",
+      "url": "https://www.kaggle.com/datasets/vijayuv/onlineretail"
+    },
+    {
+      "id": "kgurl-43",
+      "name": "uk-online-retail-dataset",
+      "address": "pavanraj1589/uk-online-retail-dataset",
+      "url": "https://www.kaggle.com/datasets/pavanraj1589/uk-online-retail-dataset"
+    },
+    {
+      "id": "kgurl-44",
+      "name": "e-commerce-data",
+      "address": "raghadalharbi/e-commerce-data",
+      "url": "https://www.kaggle.com/datasets/raghadalharbi/e-commerce-data"
+    },
+    {
+      "id": "kgurl-45",
+      "name": "global-ecommerce-data",
+      "address": "apoorvaappusz/global-ecommerce-data",
+      "url": "https://www.kaggle.com/datasets/apoorvaappusz/global-ecommerce-data"
+    },
+    {
+      "id": "kgurl-46",
+      "name": "amazon-products-dataset",
+      "address": "kaushiksuresh135/amazon-products-dataset",
+      "url": "https://www.kaggle.com/datasets/kaushiksuresh135/amazon-products-dataset"
+    },
+    {
+      "id": "kgurl-47",
+      "name": "e-commerce-dataset",
+      "address": "ywang311/e-commerce-dataset",
+      "url": "https://www.kaggle.com/datasets/ywang311/e-commerce-dataset"
+    },
+    {
+      "id": "kgurl-48",
+      "name": "e-commerce-dataset",
+      "address": "datascientistala/e-commerce-dataset",
+      "url": "https://www.kaggle.com/datasets/datascientistala/e-commerce-dataset"
+    },
+    {
+      "id": "kgurl-49",
+      "name": "online-retail-dataset",
+      "address": "laurencestewart/online-retail-dataset",
+      "url": "https://www.kaggle.com/datasets/laurencestewart/online-retail-dataset"
+    },
+    {
+      "id": "kgurl-50",
+      "name": "retail-store-sales",
+      "address": "architf/retail-store-sales",
+      "url": "https://www.kaggle.com/datasets/architf/retail-store-sales"
+    }
+  ]
+}

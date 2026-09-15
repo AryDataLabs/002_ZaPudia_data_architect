@@ -4,11 +4,11 @@ __author__     = "Aryanto"
 __copyright__  = "Copyright 2026, AryDataLabs/ZaPuDia Series"
 __credits__    = ["aryanto"]
 __license__    = "GNU_Public"
-__version__    = "0.0.1"
+__version__    = "0.0.2"
 __maintainer__ = "Aryanto, M.Si"
 __email__      = "aryanto.dandan@gmail.com"
 __created__    = "2026-08-31"
-__modified__   = "2026-09-06"
+__modified__   = "2026-09-15"
 
 
 """Individual pipeline stage implementations.
@@ -24,12 +24,14 @@ from   pathlib      import Path
 from   dataclasses  import asdict, dataclass
 from   joblib       import Parallel, delayed
 from   abc          import ABC, abstractmethod
+
+from .generation    import  grow_split_to_size
 from ..configs      import  logger
 from ..noise        import  NoiseConfig, inject_all
 from ..extractors   import (simulate_ga4_events, 
                             load_kaggle_behavior, 
-                            load_kaggle_orders)
-from ..generation import grow_split_to_size
+                            load_kaggle_orders,
+                            KG_IDDown)
 from ..transformers import (write_implicit_matrix, 
                             build_item_features, 
                             build_user_features)
@@ -67,34 +69,66 @@ class DataExtractionStage(PipelineStage):
     
     def execute(
         self,
-        behavior_path: str,
-        orders_path: str,
+        behavior_path: str | Path,
+        orders_path: str | Path,
         event_type_map: dict[str, str],
+        dataset_ids: str | list[str] | None = None,
+        json_path: str | Path | None = None,
+        base_dir: str | Path = 'data/raw',
     ) -> pl.DataFrame:
         """Load Kaggle behavior and orders data in parallel.
         Args:
             behavior_path: Path to Kaggle behavior CSV
             orders_path: Path to Kaggle orders CSV
             event_type_map: Mapping of event types
+            dataset_ids: Kaggle dataset ID(s) to download first via KG_IDDown
+            json_path: Path to kaggle_datasets.json
+            base_dir: Base directory where Kaggle datasets are extracted
+
         Returns:
             Combined events DataFrame
         """
         self.log_start()
         
+        # 1. Jalankan unduhan otomatis jika dataset_ids disuplai
+        if dataset_ids:
+            logger.info(f"Triggering Kaggle download for dataset ID(s): {dataset_ids}")
+            kwargs = {"base_dir": base_dir}
+            if json_path:
+                kwargs["json_path"] = json_path
+            
+            download_results = KG_IDDown(dataset_ids=dataset_ids, **kwargs)
+            logger.info(f"Kaggle download results: {download_results}")
+
+        b_path = Path(behavior_path)
+        o_path = Path(orders_path)
+
+        # 2. Peringatan jika file target masih belum ditemukan
+        if not b_path.exists():
+            logger.warning(f"Behavior file not found at: {b_path.resolve()}")
+        if not o_path.exists():
+            logger.warning(f"Orders file not found at: {o_path.resolve()}")
+
         logger.info(f"Loading data sources in parallel (n_jobs={self.n_jobs})")
-        logger.debug(f"Behavior path: {behavior_path}")
-        logger.debug(f"Orders path: {orders_path}")
+        logger.debug(f"Behavior path: {b_path}")
+        logger.debug(f"Orders path: {o_path}")
         
         # Parallel data loading using joblib
         results = Parallel(n_jobs=min(2, self.n_jobs if self.n_jobs > 0 else 2))(
             [
-                delayed(load_kaggle_behavior)(behavior_path, event_type_map),
-                delayed(load_kaggle_orders)(orders_path),
-            ])
+                delayed(load_kaggle_behavior)(str(b_path), event_type_map),
+                delayed(load_kaggle_orders)(str(o_path)),
+            ]
+        )
         
         behavior, orders = results
-        logger.info(f"Loaded behavior data: {behavior.select(pl.len()).collect().item():,} rows")
-        logger.info(f"Loaded orders data: {orders.select(pl.len()).collect().item():,} rows")
+        
+        b_count = behavior.select(pl.len()).collect().item()
+        o_count = orders.select(pl.len()).collect().item()
+
+        logger.info(f"Loaded behavior data: {b_count:,} rows")
+        logger.info(f"Loaded orders data: {o_count:,} rows")
+
         events = pl.concat([behavior, orders], how="vertical_relaxed").collect()
         self.log_end(f"Total events: {events.height:,}")
         return events

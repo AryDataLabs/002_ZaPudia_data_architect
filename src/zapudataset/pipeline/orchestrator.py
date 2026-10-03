@@ -4,11 +4,11 @@ __author__     = "Aryanto"
 __copyright__  = "Copyright 2026, AryDataLabs/ZaPuDia Series"
 __credits__    = ["aryanto"]
 __license__    = "GNU_Public"
-__version__    = "0.0.1"
+__version__    = "0.0.2"
 __maintainer__ = "Aryanto, M.Si"
 __email__      = "aryanto.dandan@gmail.com"
 __created__    = "2026-08-31"
-__modified__   = "2026-09-13"
+__modified__   = "2026-09-15"
 
 
 """Main pipeline orchestrator with class-based architecture.
@@ -25,8 +25,7 @@ Usage:
     from pipeline_orchestrator import DatasetPipeline
     
     pipeline = DatasetPipeline(
-        config_path="configs/pipeconf.yaml",
-        log_level="INFO"
+        config_path="configs/pipeconf.yaml"
     )
     manifest = pipeline.run()
 """
@@ -148,13 +147,16 @@ class DatasetPipeline:
             logger.info("*" + " " * 78 + "*")
             logger.info("*" * 80 + "\n")
             
-            # Stage 1: Data Extraction
+            # Stage 1: Data Extraction (Terintegrasi dengan Auto-Download Kaggle)
             events = self._time_stage(
                 "Data Extraction",
                 self.stages["extraction"].execute,
                 behavior_path=self.config.kaggle_behavior_path,
                 orders_path=self.config.kaggle_orders_path,
                 event_type_map=self.config.event_type_map,
+                dataset_ids=getattr(self.config, "dataset_ids", None),
+                json_path=getattr(self.config, "kaggle_json_path", None),
+                base_dir=getattr(self.config, "raw_dir", "data/raw"),
             )
             n_events_raw = events.height
             

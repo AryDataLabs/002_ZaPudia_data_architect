@@ -38,7 +38,7 @@ from .configs      import PipeConfig
 from .extractors   import (simulate_ga4_events,
                            load_kaggle_behavior,
                            load_kaggle_orders)
-from .generation   import ensure_nonempty_events, grow_split_to_size
+from .pipeline     import  ensure_nonempty_events, grow_split_to_size
 from .transformers import (build_item_features, 
                            build_user_features, 
                            write_implicit_matrix)

@@ -33,7 +33,7 @@ def logconfig(config_path: str = None):
     Defaults to 'pipeconf.yaml' in same directory.
     """
     config_path = (config_path or 
-                   os.getenv(DEFAULT_CONFIG_PATH) or 
+                   os.getenv('DEFAULT_CONFIG_PATH') or 
                    (base_dir / 'pipeconf.yaml'))
     try:
         cfg: PipeConfig = load_config(

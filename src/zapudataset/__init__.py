@@ -13,7 +13,8 @@ __modified__   = "2026-09-13"
 from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parents[2]
 ENV_PATH = BASE_DIR / '.env'
-print(ENV_PATH)
+
+
 try:
     from dotenv import load_dotenv
     load_dotenv(dotenv_path = ENV_PATH)
@@ -35,7 +36,15 @@ from . import pipeline
 from . import transformers
 from .dataset_builder import build_dataset
 
-__all__ = ['build_dataset',
+__all__ = [# Metadata
+           "__author__",
+           "__copyright__",
+           "__license__",
+           "__version__",
+           "__maintainer__",
+           "__email__",
+           
+           'build_dataset',
            'blueprint',
            'configs',
            'extractors',

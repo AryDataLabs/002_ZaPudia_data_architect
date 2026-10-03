@@ -8,7 +8,7 @@ __version__    = "0.0.1"
 __maintainer__ = "Aryanto"
 __email__      = "aryanto.dandan@gmail.com"
 __created__    = "2026-08-31"
-__modified__   = "2026-09-07"
+__modified__   = "2026-10-03"
 
 
 # --------------------------------------------------------------------------

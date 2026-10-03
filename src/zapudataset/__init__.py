@@ -36,7 +36,15 @@ from . import pipeline
 from . import transformers
 from .dataset_builder import build_dataset
 
-__all__ = ['build_dataset',
+__all__ = [# Metadata
+           "__author__",
+           "__copyright__",
+           "__license__",
+           "__version__",
+           "__maintainer__",
+           "__email__",
+           
+           'build_dataset',
            'blueprint',
            'configs',
            'extractors',

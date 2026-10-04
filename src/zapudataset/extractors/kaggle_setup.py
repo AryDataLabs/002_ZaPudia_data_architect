@@ -4,7 +4,7 @@ __author__     = "Aryanto"
 __copyright__  = "Copyright 2026, AryDataLabs/ZaPuDia Series"
 __credits__    = ["aryanto"]
 __license__    = "GNU_Public"
-__version__    = "0.0.4"
+__version__    = "0.0.5"
 __maintainer__ = "Aryanto, M.Si"
 __email__      = "aryanto.dandan@gmail.com"
 __created__    = "2026-08-31"
@@ -12,9 +12,10 @@ __modified__   = "2026-10-04"
 
 import os
 import json
+import polars  as pl
 from pathlib   import Path
 from typing    import Optional
-import polars  as pl
+from tqdm      import tqdm
 
 from ..configs import logger
 from kaggle.api.kaggle_api_extended import KaggleApi
@@ -23,13 +24,14 @@ kaggledir = Path(__file__).resolve().parent
 
 
 def _convert_csv_to_parquet_if_needed(target_path: Path) -> None:
-    """Convert any downloaded .csv files in target_path to .parquet format."""
+    """Convert any downloaded .csv files in target_path to .parquet format with a progress bar."""
     csv_files = list(target_path.glob("*.csv"))
     if csv_files:
-        logger.info(f"Converting {len(csv_files)} CSV file(s) to Parquet in {target_path}...")
-        for csv_file in csv_files:
+        pbar = tqdm(csv_files, desc=f"Converting CSV to Parquet [{target_path.name}]", unit="file")
+        for csv_file in pbar:
             parquet_file = csv_file.with_suffix(".parquet")
             if not parquet_file.exists():
+                pbar.set_postfix_str(f"Processing {csv_file.name}")
                 try:
                     df = pl.read_csv(csv_file, infer_schema_length=10000, ignore_errors=True)
                     df.write_parquet(parquet_file)
@@ -48,7 +50,7 @@ def KaggleSetup(
         token    = token or os.getenv('KaggleAPItoken') or os.getenv('KAGGLE_KEY')
         if not username or not token:
             logger.error("Kaggle creds missing! Make sure "
-            "KAGGLE_USERNAME and KAGGLE_KEY exist in environment variables.")
+            "KAGGLE_USERNAME and KAGGLE_KEY exist in environment variables or .env file.")
             return False
 
         os.environ['KAGGLE_USERNAME'] = username
@@ -65,7 +67,7 @@ def KaggleDown(
         target_dir : str | Path = '.',
         unzip      : bool = True,
     ) -> bool:
-    """Download and extract Kaggle dataset using in-memory auth."""
+    """Download and extract Kaggle dataset using in-memory auth with download progress bar."""
     success     = False
     target_path = Path(target_dir)
     target_path.mkdir(parents = True, exist_ok = True)
@@ -75,13 +77,17 @@ def KaggleDown(
                 return False
         api = KaggleApi()
         api.authenticate()
+        
+        logger.info(f"Downloading dataset '{address}' to {target_path}...")
         api.dataset_download_files(
             address,
             path  = str(target_path), 
-            unzip = unzip)
+            unzip = unzip,
+            quiet = False
+        )
         logger.info(f"Done downloading '{address}'")
         
-        # Otomatis konversi file CSV ke Parquet untuk disesuaikan dengan kaggle_loader
+        # Konversi CSV ke Parquet secara otomatis dengan progress bar
         _convert_csv_to_parquet_if_needed(target_path)
         
         success = True
@@ -118,7 +124,10 @@ def KG_IDDown(
     ds_map     = {item['id']: item for item in config.get('kaggle_datasets', []) if 'id' in item}
     target_ids = [dataset_ids] if isinstance(dataset_ids, str) else dataset_ids
     results    = dict()
-    for ds_id in target_ids:
+
+    # Progress bar untuk memantau unduhan antar dataset ID
+    id_pbar = tqdm(target_ids, desc="Kaggle Datasets Pipeline", unit="ds")
+    for ds_id in id_pbar:
         if ds_id not in ds_map:
             logger.warning(f"Dataset ID '{ds_id}' not found in {json_file.name}")
             results[ds_id] = False
@@ -126,7 +135,10 @@ def KG_IDDown(
         item       = ds_map[ds_id]
         address    = item['address']
         target_dir = Path(base_dir) / item['name']
+        
+        id_pbar.set_postfix_str(f"ID: {ds_id} ({item['name']})")
         logger.info(f"Processing ID [{ds_id}] -> {item['name']}")
+        
         success = KaggleDown(address=address, target_dir=target_dir)
         results[ds_id] = success
     return results

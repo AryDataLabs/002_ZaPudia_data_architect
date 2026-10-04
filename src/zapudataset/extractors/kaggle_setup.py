@@ -19,25 +19,61 @@ from tqdm      import tqdm
 
 from ..configs import logger
 from kaggle.api.kaggle_api_extended import KaggleApi
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from tqdm.auto import tqdm
 
 kaggledir = Path(__file__).resolve().parent
 
 
+def _convert_single_csv(csv_file_path: str) -> str:
+    """Worker function untuk multiprocessing (harus top-level/picklable)."""
+    csv_file = Path(csv_file_path)
+    parquet_file = csv_file.with_suffix(".parquet")
+    
+    if not parquet_file.exists():
+        # Polars streaming engine sink_parquet
+        pl.scan_csv(
+            csv_file,
+            infer_schema_length=10000,
+            ignore_errors=True,
+        ).sink_parquet(parquet_file, compression="zstd")
+        
+        return f"Converted: {csv_file.name} -> {parquet_file.name}"
+    return f"Skipped (Already exists): {parquet_file.name}"
+
+
 def _convert_csv_to_parquet_if_needed(target_path: Path) -> None:
-    """Convert any downloaded .csv files in target_path to .parquet format with a progress bar."""
+    """Convert downloaded .csv files to .parquet using Multiprocessing + Polars Streaming."""
     csv_files = list(target_path.glob("*.csv"))
-    if csv_files:
-        pbar = tqdm(csv_files, desc=f"Converting CSV to Parquet [{target_path.name}]", unit="file")
-        for csv_file in pbar:
-            parquet_file = csv_file.with_suffix(".parquet")
-            if not parquet_file.exists():
-                pbar.set_postfix_str(f"Processing {csv_file.name}")
-                try:
-                    df = pl.read_csv(csv_file, infer_schema_length=10000, ignore_errors=True)
-                    df.write_parquet(parquet_file)
-                    logger.info(f"Converted: {csv_file.name} -> {parquet_file.name}")
-                except Exception as e:
-                    logger.error(f"Failed converting {csv_file.name} to parquet: {e}")
+    if not csv_files:
+        return
+
+    # Batasi worker sesuai jumlah CPU atau jumlah file (misal maks 2 di Google Colab agar RAM tidak OOM)
+    cpu_cores = os.cpu_count() or 1
+    max_workers = min(len(csv_files), max(1, cpu_cores))
+
+    logger.info(f"Starting parallel CSV conversion with {max_workers} worker process(es)...")
+
+    pbar = tqdm(total=len(csv_files), desc=f"Converting CSV [{target_path.name}]", unit="file")
+
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        # Submit semua task konversi ke pool process
+        future_to_file = {
+            executor.submit(_convert_single_csv, str(csv_file)): csv_file
+            for csv_file in csv_files
+        }
+
+        for future in as_completed(future_to_file):
+            csv_file = future_to_file[future]
+            try:
+                msg = future.result()
+                logger.info(msg)
+            except Exception as e:
+                logger.error(f"Failed converting {csv_file.name} to parquet: {e}")
+            finally:
+                pbar.update(1)
+
+    pbar.close()
 
 
 def KaggleSetup(

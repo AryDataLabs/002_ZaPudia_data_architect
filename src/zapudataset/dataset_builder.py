@@ -37,7 +37,9 @@ from .noise        import  NoiseConfig, inject_all
 from .configs      import PipeConfig
 from .extractors   import (simulate_ga4_events,
                            load_kaggle_behavior,
-                           load_kaggle_orders)
+                           load_kaggle_orders,
+                           KaggleSetup,
+                           KG_IDDown)
 from .pipeline     import  ensure_nonempty_events, grow_split_to_size
 from .transformers import (build_item_features, 
                            build_user_features, 
@@ -55,11 +57,21 @@ def _ensure_dirs(*paths: str | Path) -> None:
         Path(p).mkdir(parents=True, exist_ok=True)
 
 
+def _file_or_pattern_exists(path_str: str) -> bool:
+    """Check if file exists or matches a wildcard pattern using pathlib."""
+    p = Path(path_str)
+    if "*" in path_str or "?" in path_str:
+        return any(Path().glob(path_str))
+    return p.exists()
+
+
 def _auto_download_sources(cfg: dict[str, Any]) -> None:
     """Download Kaggle sources if missing."""
     beh_path = cfg["sources"]["kaggle_behavior"]["path"]
     ord_path = cfg["sources"]["kaggle_orders"]["path"]
-    if not glob(beh_path) or not glob(ord_path):
+    
+    # Menggunakan pathlib via helper function _file_or_pattern_exists
+    if not _file_or_pattern_exists(beh_path) or not _file_or_pattern_exists(ord_path):
         if KaggleSetup():
             ds_ids = cfg.get("sources", {}).get(
                 "kaggle_dataset_ids",

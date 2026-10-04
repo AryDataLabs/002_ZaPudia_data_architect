@@ -2,13 +2,13 @@
   "kaggle_datasets": [
     {
       "id": "kgurl-01",
-      "name": "ecommerce-behavior-data-from-multi-category-store",
+      "name": "ecommerce-behavior",
       "address": "mkechinov/ecommerce-behavior-data-from-multi-category-store",
       "url": "https://www.kaggle.com/datasets/mkechinov/ecommerce-behavior-data-from-multi-category-store"
     },
     {
       "id": "kgurl-02",
-      "name": "ecommerce-purchase-history-from-electronics-store",
+      "name": "ecommerce-purchase-history",
       "address": "mkechinov/ecommerce-purchase-history-from-electronics-store",
       "url": "https://www.kaggle.com/datasets/mkechinov/ecommerce-purchase-history-from-electronics-store"
     },

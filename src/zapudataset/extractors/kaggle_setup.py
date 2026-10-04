@@ -4,19 +4,39 @@ __author__     = "Aryanto"
 __copyright__  = "Copyright 2026, AryDataLabs/ZaPuDia Series"
 __credits__    = ["aryanto"]
 __license__    = "GNU_Public"
-__version__    = "0.0.3"
+__version__    = "0.0.4"
 __maintainer__ = "Aryanto, M.Si"
 __email__      = "aryanto.dandan@gmail.com"
 __created__    = "2026-08-31"
-__modified__   = "2026-09-15"
+__modified__   = "2026-10-04"
 
 import os
+import json
 from pathlib   import Path
 from typing    import Optional
+import polars  as pl
+
 from ..configs import logger
 from kaggle.api.kaggle_api_extended import KaggleApi
 
 kaggledir = Path(__file__).resolve().parent
+
+
+def _convert_csv_to_parquet_if_needed(target_path: Path) -> None:
+    """Convert any downloaded .csv files in target_path to .parquet format."""
+    csv_files = list(target_path.glob("*.csv"))
+    if csv_files:
+        logger.info(f"Converting {len(csv_files)} CSV file(s) to Parquet in {target_path}...")
+        for csv_file in csv_files:
+            parquet_file = csv_file.with_suffix(".parquet")
+            if not parquet_file.exists():
+                try:
+                    df = pl.read_csv(csv_file, infer_schema_length=10000, ignore_errors=True)
+                    df.write_parquet(parquet_file)
+                    logger.info(f"Converted: {csv_file.name} -> {parquet_file.name}")
+                except Exception as e:
+                    logger.error(f"Failed converting {csv_file.name} to parquet: {e}")
+
 
 def KaggleSetup(
         username : Optional[str] = None, 
@@ -24,12 +44,11 @@ def KaggleSetup(
     ) -> bool:
     """Inject Kaggle creds straight into runtime env vars. No disk saving."""
     try:
-        # Grab from params first, fall back to .env
         username = username or os.getenv('KaggleUsername') or os.getenv('KAGGLE_USERNAME')
         token    = token or os.getenv('KaggleAPItoken') or os.getenv('KAGGLE_KEY')
         if not username or not token:
             logger.error("Kaggle creds missing! Make sure "
-            "KaggleUsername and KaggleAPItoken exist in .env")
+            "KAGGLE_USERNAME and KAGGLE_KEY exist in environment variables.")
             return False
 
         os.environ['KAGGLE_USERNAME'] = username
@@ -39,6 +58,7 @@ def KaggleSetup(
     except Exception as Arr:
         logger.error(f"Failed setting up Kaggle env vars: {Arr}")
         return False
+
 
 def KaggleDown(
         address    : str = 'andrexibiza/grocery-sales-dataset',
@@ -60,10 +80,14 @@ def KaggleDown(
             path  = str(target_path), 
             unzip = unzip)
         logger.info(f"Done downloading '{address}'")
-        success   = True
+        
+        # Otomatis konversi file CSV ke Parquet untuk disesuaikan dengan kaggle_loader
+        _convert_csv_to_parquet_if_needed(target_path)
+        
+        success = True
     except Exception as Arr:
         logger.error(f"Failed pulling '{address}': {Arr}")
-        raise ValueError()
+        raise ValueError(f"Failed to download dataset {address}: {Arr}")
     finally:
         if target_path.exists():
             files = os.listdir(target_path)
@@ -111,4 +135,3 @@ def KG_IDDown(
 if __name__ == '__main__':
     if KaggleSetup():
         print("Kaggle env vars loaded into memory successfully!")
-

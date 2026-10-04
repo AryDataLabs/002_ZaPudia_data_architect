@@ -65,20 +65,42 @@ def _file_or_pattern_exists(path_str: str) -> bool:
     return p.exists()
 
 
-def _auto_download_sources(cfg: dict[str, Any]) -> None:
-    """Download Kaggle sources if missing."""
-    beh_path = cfg["sources"]["kaggle_behavior"]["path"]
-    ord_path = cfg["sources"]["kaggle_orders"]["path"]
+def _auto_download_sources(cfg: dict[str, Any]) -> dict[str, Path]:
+    """
+    Download Kaggle sources if missing and return verified source paths.
     
-    # Menggunakan pathlib via helper function _file_or_pattern_exists
-    if not _file_or_pattern_exists(beh_path) or not _file_or_pattern_exists(ord_path):
+    Returns:
+        dict[str, Path]: Path terverifikasi untuk 'behavior' dan 'orders'.
+    """
+    beh_path = Path(cfg["sources"]["kaggle_behavior"]["path"])
+    ord_path = Path(cfg["sources"]["kaggle_orders"]["path"])
+
+    # Download jika salah satu path belum ada/berisi file
+    if not _file_or_pattern_exists(str(beh_path)) or not _file_or_pattern_exists(str(ord_path)):
         if KaggleSetup():
             ds_ids = cfg.get("sources", {}).get(
                 "kaggle_dataset_ids",
                 ["kgurl-01", "kgurl-02"],
             )
-            KG_IDDown(dataset_ids=ds_ids)
+            download_status = KG_IDDown(dataset_ids=ds_ids)
+            
+            # Cek jika ada ID yang gagal diunduh
+            if not all(download_status.values()):
+                logger.warning(f"Status unduhan dataset: {download_status}")
 
+    # Validasi akhir: Pastikan file benar-benar ada setelah unduhan
+    if not _file_or_pattern_exists(str(beh_path)) or not _file_or_pattern_exists(str(ord_path)):
+        raise FileNotFoundError(
+            f"Source datasets missing after download process.\n"
+            f"Expected behavior path: {beh_path}\n"
+            f"Expected orders path: {ord_path}\n"
+            f"Please check your Kaggle API token or internet connection."
+        )
+
+    return {
+        "behavior": beh_path,
+        "orders": ord_path,
+    }
 
 def build_dataset(
     config_path: str | Path = (
@@ -92,17 +114,16 @@ def build_dataset(
     int_dir = Path(cfg["pipeline"]["intermediate_dir"])
     _ensure_dirs(out_dir, int_dir)
 
-    # Auto download raw datasets if missing
-    _auto_download_sources(cfg)
+    # 0. Auto download raw datasets & dapatkan verified filepaths
+    source_paths = _auto_download_sources(cfg)
 
     # 1. Extract & harmonize Kaggle sources
     beh_cfg = cfg["sources"]["kaggle_behavior"]
-    ord_cfg = cfg["sources"]["kaggle_orders"]
     behavior = load_kaggle_behavior(
-        beh_cfg["path"],
+        str(source_paths["behavior"]),  # Langsung gunakan dari return value
         beh_cfg["event_type_map"],
     )
-    orders = load_kaggle_orders(ord_cfg["path"])
+    orders = load_kaggle_orders(str(source_paths["orders"]))
     events = pl.concat(
         [behavior, orders],
         how="vertical_relaxed",

@@ -4,7 +4,7 @@ __author__     = "Aryanto"
 __copyright__  = "Copyright 2026, AryDataLabs/ZaPuDia Series"
 __credits__    = ["aryanto"]
 __license__    = "GNU_Public"
-__version__    = "0.0.3"
+__version__    = "0.0.4"
 __maintainer__ = "Aryanto, M.Si"
 __email__      = "aryanto.dandan@gmail.com"
 __created__    = "2026-08-31"
@@ -21,7 +21,6 @@ import polars as pl
 from pathlib  import Path
 from glob     import glob
 
-# Deklarasi Skema Utama (Sebagai referensi / kontrak tipe data modul)
 _KAGGLE_BEHAVIOR_SCHEMA = pl.Schema(
     {"event_time"     : pl.Datetime("ms"),
      "event_type"     : pl.Utf8,
@@ -62,11 +61,7 @@ def load_kaggle_behavior(
     path_pattern: str,
     event_type_map: dict[str, str],
 ) -> pl.LazyFrame:
-    """
-    Load and harmonize Kaggle behavior logs to the unified schema.
-    Backfills ``engagement_time_msec`` is left NULL here; the GA4 join and the
-    session dwell backfill (§1.2.3 rule 2) fill it downstream.
-    """
+    """Load and harmonize Kaggle behavior logs to the unified schema."""
     files = glob(path_pattern)
     if not files:
         raise FileNotFoundError(
@@ -75,8 +70,6 @@ def load_kaggle_behavior(
             f"Expected location: data/raw/kaggle_behavior/*.parquet"
         )
     
-    # scan_parquet dibaca tanpa klausa schema= agar fleksibel terhadap
-    # perbedaan tipe data fisik Parquet (misal: Int64 vs String dari inferensi CSV)
     return (
         pl.scan_parquet(path_pattern)
         .with_columns(
@@ -127,8 +120,7 @@ def load_kaggle_orders(
 ) -> pl.LazyFrame:
     """
     Load Kaggle order/LTV sources and project to a purchase-event stream.
-    Each order row becomes a single ``purchase`` event enriched with LTV,
-    fulfillment status, discount flag, age band and province.
+    Dynamically checks available columns to support multiple dataset structures.
     """
     files = glob(path_pattern)
     if not files:
@@ -138,28 +130,46 @@ def load_kaggle_orders(
             f"Expected location: data/raw/kaggle_orders/*.parquet"
         )
     region_to_province = region_to_province or dict()
-    
+
+    lf = pl.scan_parquet(path_pattern)
+    cols = lf.collect_schema().names()
+
+    # Dynamic Column Resolution
+    time_col = "order_timestamp" if "order_timestamp" in cols else "event_time"
+    user_col = "customer_id" if "customer_id" in cols else "user_id"
+
+    cat_code_expr = (
+        pl.col("category").cast(pl.Utf8).alias("category_code") if "category" in cols 
+        else (pl.col("category_code").cast(pl.Utf8).alias("category_code") if "category_code" in cols else pl.lit(None, dtype=pl.Utf8).alias("category_code"))
+    )
+    cat_id_expr = pl.col("category_id").cast(pl.Utf8).alias("category_id") if "category_id" in cols else pl.lit(None, dtype=pl.Utf8).alias("category_id")
+    session_expr = pl.col("user_session").cast(pl.Utf8).alias("user_session") if "user_session" in cols else pl.lit(None, dtype=pl.Utf8).alias("user_session")
+    region_expr = pl.col("region").cast(pl.Utf8).replace_strict(region_to_province, default=None).alias("geo_province") if "region" in cols else pl.lit(None, dtype=pl.Utf8).alias("geo_province")
+    discount_expr = pl.col("discount").cast(pl.Boolean).alias("discount_flag") if "discount" in cols else pl.lit(False, dtype=pl.Boolean).alias("discount_flag")
+    status_expr = pl.col("order_status").cast(pl.Utf8).alias("fulfillment_status") if "order_status" in cols else pl.lit("completed", dtype=pl.Utf8).alias("fulfillment_status")
+    ltv_expr = pl.col("ltv").cast(pl.Float64).alias("customer_ltv") if "ltv" in cols else pl.lit(None, dtype=pl.Float64).alias("customer_ltv")
+    age_expr = _bin_age(pl.col("age").cast(pl.Int32)).alias("age_band") if "age" in cols else pl.lit(None, dtype=pl.Utf8).alias("age_band")
+
     return (
-        pl.scan_parquet(path_pattern)
-        .with_columns(
-            pl.col("order_timestamp").cast(pl.Utf8).str.to_datetime(strict=False)
+        lf.with_columns(
+            pl.col(time_col).cast(pl.Utf8).str.to_datetime(strict=False)
             .dt.timestamp(time_unit="ms").alias("event_time"),
             pl.lit("purchase").alias("event_type"),
-            pl.col("customer_id").cast(pl.Utf8).alias("user_id"),
+            pl.col(user_col).cast(pl.Utf8).alias("user_id"),
             pl.lit(None, dtype=pl.Utf8).alias("user_pseudo_id"),
             pl.col("product_id").cast(pl.Utf8).alias("item_id"),
-            pl.lit(None, dtype=pl.Utf8).alias("category_id"),
-            pl.col("category").cast(pl.Utf8).alias("category_code"),
-            pl.col("brand").cast(pl.Utf8),
-            pl.col("price").cast(pl.Float64).alias("price"),
-            pl.lit(None, dtype=pl.Utf8).alias("user_session"),
+            cat_id_expr,
+            cat_code_expr,
+            pl.col("brand").cast(pl.Utf8) if "brand" in cols else pl.lit(None, dtype=pl.Utf8).alias("brand"),
+            pl.col("price").cast(pl.Float64).alias("price") if "price" in cols else pl.lit(None, dtype=pl.Float64).alias("price"),
+            session_expr,
             pl.lit(None, dtype=pl.Int64).alias("engagement_time_msec"),
             pl.lit(None, dtype=pl.Utf8).alias("device_category"),
-            pl.col("region").cast(pl.Utf8).replace_strict(region_to_province, default=None).alias("geo_province"),
-            pl.col("discount").cast(pl.Boolean).alias("discount_flag"),
-            pl.col("order_status").cast(pl.Utf8).alias("fulfillment_status"),
-            pl.col("ltv").cast(pl.Float64).alias("customer_ltv"),
-            _bin_age(pl.col("age").cast(pl.Int32)).alias("age_band"),
+            region_expr,
+            discount_expr,
+            status_expr,
+            ltv_expr,
+            age_expr,
         )
         .select(
             "event_time", 

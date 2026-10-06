@@ -4,25 +4,18 @@ __author__     = "Aryanto"
 __copyright__  = "Copyright 2026, AryDataLabs/ZaPuDia Series"
 __credits__    = ["aryanto"]
 __license__    = "GNU_Public"
-__version__    = "0.0.1"
+__version__    = "0.0.2"
 __maintainer__ = "Aryanto, M.Si"
 __email__      = "aryanto.dandan@gmail.com"
 __created__    = "2026-08-31"
-__modified__   = "2026-10-03"
+__modified__   = "2026-10-05"
 
 
 """
-End-to-end dataset builder orchestrator.
+End-to-end dataset builder orchestrator with comprehensive logging.
 ________________________________________
 Wires extractors -> noise -> implicit builder -> feature encoder -> split ->
 partitioned parquet exports. Single entry point for the whole pipeline.
-Exports (in cfg.output_dir):
-  - train_interactions.parquet
-  - test_interactions.parquet
-  - item_features.parquet (+ .encoders.json)
-  - user_features.parquet (+ .encoders.json)
-  - implicit_matrix.parquet
-  - cold_items.json, null_items.json, build_manifest.json
 """
 
 import json
@@ -34,7 +27,7 @@ from   pathlib     import Path
 from   typing      import Any
 
 from .noise        import  NoiseConfig, inject_all
-from .configs      import PipeConfig
+from .configs      import PipeConfig, logger
 from .extractors   import (simulate_ga4_events,
                            load_kaggle_behavior,
                            load_kaggle_orders,
@@ -45,62 +38,89 @@ from .transformers import (build_item_features,
                            build_user_features, 
                            write_implicit_matrix)
 
+
 def _load_config(path: str | Path) -> dict[str, Any]:
     """Load configuration YAML file."""
-    with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+    p = Path(path)
+    logger.info(f"[Config] Loading pipeline config from: {p.resolve()}")
+    if not p.exists():
+        logger.error(f"[Config] File not found: {p.resolve()}")
+        raise FileNotFoundError(f"Config file missing: {p.resolve()}")
+    with open(p, "r", encoding="utf-8") as f:
+        cfg = yaml.safe_load(f)
+    logger.debug(f"[Config] Configuration loaded successfully.")
+    return cfg
 
 
 def _ensure_dirs(*paths: str | Path) -> None:
     """Create directories if they do not exist."""
     for p in paths:
-        Path(p).mkdir(parents=True, exist_ok=True)
+        path_obj = Path(p)
+        if not path_obj.exists():
+            path_obj.mkdir(parents=True, exist_ok=True)
+            logger.info(f"[IO] Created directory: {path_obj.resolve()}")
+        else:
+            logger.debug(f"[IO] Directory already exists: {path_obj.resolve()}")
 
 
 def _file_or_pattern_exists(path_str: str) -> bool:
     """Check if file exists or matches a wildcard pattern using pathlib."""
     p = Path(path_str)
     if "*" in path_str or "?" in path_str:
-        return any(Path().glob(path_str))
-    return p.exists()
+        matches = list(Path().glob(path_str))
+        exists = len(matches) > 0
+        logger.debug(f"[Check] Wildcard pattern '{path_str}' matched {len(matches)} file(s).")
+        return exists
+    exists = p.exists()
+    logger.debug(f"[Check] Path '{path_str}' exists: {exists}")
+    return exists
 
 
 def _auto_download_sources(cfg: dict[str, Any]) -> dict[str, Path]:
-    """
-    Download Kaggle sources if missing and return verified source paths.
-    
-    Returns:
-        dict[str, Path]: Path terverifikasi untuk 'behavior' dan 'orders'.
-    """
+    """Download Kaggle sources if missing and return verified source paths."""
+    logger.info("[Step 0] Verifying raw source datasets...")
     beh_path = Path(cfg["sources"]["kaggle_behavior"]["path"])
     ord_path = Path(cfg["sources"]["kaggle_orders"]["path"])
 
-    # Download jika salah satu path belum ada/berisi file
-    if not _file_or_pattern_exists(str(beh_path)) or not _file_or_pattern_exists(str(ord_path)):
+    logger.info(f"[Step 0] Behavior target pattern: {beh_path}")
+    logger.info(f"[Step 0] Orders target pattern:   {ord_path}")
+
+    has_beh = _file_or_pattern_exists(str(beh_path))
+    has_ord = _file_or_pattern_exists(str(ord_path))
+
+    if not has_beh or not has_ord:
+        logger.warning("[Step 0] One or more source datasets missing. Triggering Kaggle downloader...")
         if KaggleSetup():
             ds_ids = cfg.get("sources", {}).get(
                 "kaggle_dataset_ids",
                 ["kgurl-01", "kgurl-02"],
             )
+            logger.info(f"[Step 0] Downloading dataset IDs: {ds_ids}")
             download_status = KG_IDDown(dataset_ids=ds_ids)
-            
-            # Cek jika ada ID yang gagal diunduh
+            logger.info(f"[Step 0] Download status: {download_status}")
             if not all(download_status.values()):
-                logger.warning(f"Status unduhan dataset: {download_status}")
+                logger.warning(f"[Step 0] Some downloads reported non-success: {download_status}")
+        else:
+            logger.error("[Step 0] KaggleSetup failed. Unable to authenticate.")
 
-    # Validasi akhir: Pastikan file benar-benar ada setelah unduhan
-    if not _file_or_pattern_exists(str(beh_path)) or not _file_or_pattern_exists(str(ord_path)):
+    # Re-check post-download
+    has_beh_after = _file_or_pattern_exists(str(beh_path))
+    has_ord_after = _file_or_pattern_exists(str(ord_path))
+
+    if not has_beh_after or not has_ord_after:
+        logger.error(f"[Step 0] Validation failed! Behavior exists: {has_beh_after}, Orders exists: {has_ord_after}")
         raise FileNotFoundError(
             f"Source datasets missing after download process.\n"
             f"Expected behavior path: {beh_path}\n"
-            f"Expected orders path: {ord_path}\n"
-            f"Please check your Kaggle API token or internet connection."
+            f"Expected orders path: {ord_path}"
         )
 
+    logger.info("[Step 0] Raw source datasets verified successfully.")
     return {
         "behavior": beh_path,
         "orders": ord_path,
     }
+
 
 def build_dataset(
     config_path: str | Path = (
@@ -108,32 +128,53 @@ def build_dataset(
     ),
 ) -> dict[str, Any]:
     """Run full dataset building pipeline."""
+    start_time = datetime.now()
+    logger.info("=" * 60)
+    logger.info("  STARTING DATASET BUILDER PIPELINE")
+    logger.info("=" * 60)
+
     cfg = _load_config(config_path)
     seed = cfg["pipeline"]["seed"]
     out_dir = Path(cfg["pipeline"]["output_dir"])
     int_dir = Path(cfg["pipeline"]["intermediate_dir"])
+    
+    logger.info(f"[Init] Output Directory:       {out_dir.resolve()}")
+    logger.info(f"[Init] Intermediate Directory: {int_dir.resolve()}")
     _ensure_dirs(out_dir, int_dir)
 
-    # 0. Auto download raw datasets & dapatkan verified filepaths
+    # 0. Auto download raw datasets & get verified filepaths
     source_paths = _auto_download_sources(cfg)
 
     # 1. Extract & harmonize Kaggle sources
+    logger.info("[Step 1] Extracting & harmonizing Kaggle sources...")
     beh_cfg = cfg["sources"]["kaggle_behavior"]
+    
+    logger.info(f"[Step 1] Loading behavior logs from: {source_paths['behavior']}")
     behavior = load_kaggle_behavior(
-        str(source_paths["behavior"]),  # Langsung gunakan dari return value
+        str(source_paths["behavior"]),
         beh_cfg["event_type_map"],
     )
+    
+    logger.info(f"[Step 1] Loading order logs from:    {source_paths['orders']}")
     orders = load_kaggle_orders(str(source_paths["orders"]))
+
+    logger.info("[Step 1] Concatenating LazyFrames & collecting to RAM...")
     events = pl.concat(
         [behavior, orders],
         how="vertical_relaxed",
     ).collect()
+    
+    logger.info(f"[Step 1] Raw concatenated events height: {events.height:,} rows | Schema columns: {len(events.columns)}")
     events = ensure_nonempty_events(events, cfg)
+    logger.info(f"[Step 1] Non-empty events height:       {events.height:,} rows")
 
     # 2. Augment with GA4 telemetry
+    logger.info("[Step 2] Augmenting dataset with GA4 telemetry simulation...")
     events = simulate_ga4_events(events, config=cfg)
+    logger.info(f"[Step 2] Events height post GA4 augmentation: {events.height:,} rows")
 
     # 3. Noise injection
+    logger.info("[Step 3] Injecting synthetic noise & anomalies...")
     nz = cfg["noise"]
     ncfg = NoiseConfig(
         telemetry_drop_rate=nz["telemetry_drop_rate"],
@@ -151,14 +192,19 @@ def build_dataset(
         ncfg,
         cfg["geo_provinces"],
     )
-    (out_dir / "cold_items.json").write_text(
-        json.dumps(sorted(cold_items))
-    )
-    (out_dir / "null_items.json").write_text(
-        json.dumps(sorted(null_items))
-    )
+    logger.info(f"[Step 3] Corrupted events height: {corrupted.height:,} rows")
+    logger.info(f"[Step 3] Cold start items count:  {len(cold_items)}")
+    logger.info(f"[Step 3] Null items count:        {len(null_items)}")
+
+    cold_items_path = out_dir / "cold_items.json"
+    null_items_path = out_dir / "null_items.json"
+    
+    cold_items_path.write_text(json.dumps(sorted(cold_items)))
+    null_items_path.write_text(json.dumps(sorted(null_items)))
+    logger.info(f"[Step 3] Saved: {cold_items_path.name} & {null_items_path.name}")
 
     # 4. Train/test split
+    logger.info("[Step 4] Executing Train/Test split...")
     min_int = cfg["split"]["min_user_interactions"]
     user_counts = (
         corrupted.group_by(pl.col("user_id"))
@@ -166,18 +212,21 @@ def build_dataset(
         .filter(pl.col("n") >= min_int)
     )
     eligible = user_counts["user_id"]
+    logger.info(f"[Step 4] Total eligible users (>= {min_int} interactions): {eligible.len():,}")
+
     n_test = int(cfg["split"]["test_fraction"] * eligible.len())
     test_users = set(
         eligible.sample(n=n_test, seed=seed).to_list()
     )
-    train = corrupted.filter(
-        ~pl.col("user_id").is_in(list(test_users))
-    )
-    test = corrupted.filter(
-        pl.col("user_id").is_in(list(test_users))
-    )
+    logger.info(f"[Step 4] Sampled test users count: {len(test_users):,}")
+
+    train = corrupted.filter(~pl.col("user_id").is_in(list(test_users)))
+    test = corrupted.filter(pl.col("user_id").is_in(list(test_users)))
+    
     train_path = out_dir / "train_interactions.parquet"
     test_path = out_dir / "test_interactions.parquet"
+    
+    logger.info(f"[Step 4] Growing/adjusting split sizes...")
     train, test = grow_split_to_size(
         train,
         test,
@@ -185,8 +234,11 @@ def build_dataset(
         test_path,
         cfg,
     )
+    logger.info(f"[Step 4] Saved train interactions ({train.height:,} rows) -> {train_path.resolve()}")
+    logger.info(f"[Step 4] Saved test interactions  ({test.height:,} rows)  -> {test_path.resolve()}")
 
     # 5. Implicit matrix (DuckDB)
+    logger.info("[Step 5] Building implicit interaction matrix via DuckDB...")
     weights = cfg["implicit_weights"]
     imp_cfg = cfg["implicit_normalization"]
     implicit_path = write_implicit_matrix(
@@ -196,8 +248,10 @@ def build_dataset(
         norm_min=imp_cfg["min_rating"],
         norm_max=imp_cfg["max_rating"],
     )
+    logger.info(f"[Step 5] Saved implicit matrix -> {Path(implicit_path).resolve()}")
 
     # 6. Feature parquet exports
+    logger.info("[Step 6] Extracting item & user feature tables...")
     full_cat = pl.concat(
         [train, test],
         how="vertical_relaxed",
@@ -207,12 +261,16 @@ def build_dataset(
         cold_items,
         out_dir / "item_features.parquet",
     )
+    logger.info(f"[Step 6] Saved item features -> {Path(item_path).resolve()}")
+
     user_path, user_maps = build_user_features(
         train,
         out_dir / "user_features.parquet",
     )
+    logger.info(f"[Step 6] Saved user features -> {Path(user_path).resolve()}")
 
     # 7. Manifest
+    logger.info("[Step 7] Generating pipeline manifest...")
     manifest = {
         "pipeline": cfg["pipeline"],
         "n_events_raw": int(events.height),
@@ -235,6 +293,12 @@ def build_dataset(
     }
     manifest_path = out_dir / "build_manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2))
+    logger.info(f"[Step 7] Saved build manifest -> {manifest_path.resolve()}")
+
+    elapsed = (datetime.now() - start_time).total_seconds()
+    logger.info("=" * 60)
+    logger.info(f"  PIPELINE COMPLETED SUCCESSFULLY IN {elapsed:.2f}s")
+    logger.info("=" * 60)
     return manifest
 
 

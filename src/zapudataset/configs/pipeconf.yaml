@@ -64,7 +64,7 @@ session:
 logging:
   log_file          : "zapudia_pipeline.log"
   logpath           : "~/artifact/logs"
-  level             : "WARNING"
+  level             : "INFO"
 
 geo_provinces:
   - "ID-JK"   # Jakarta
@@ -102,6 +102,6 @@ generation:
   bootstrap_users        : 20000
   interactions_per_user  : 25
   item_count             : 50000
-  min_train_mb           : 100
-  min_test_mb            : 100
+  min_train_mb           : 5
+  min_test_mb            : 5
   max_growth_rounds      : 8

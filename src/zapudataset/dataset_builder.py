@@ -25,9 +25,10 @@ from   dataclasses import asdict
 from   datetime    import datetime, timezone
 from   pathlib     import Path
 from   typing      import Any
+from   copy        import deepcopy
 
-from .noise        import  NoiseConfig, inject_all
-from .configs      import PipeConfig, logger
+from .noise        import NoiseConfig, inject_all
+from .configs      import logger, configure
 from .extractors   import (simulate_ga4_events,
                            load_kaggle_behavior,
                            load_kaggle_orders,
@@ -39,40 +40,25 @@ from .transformers import (build_item_features,
                            write_implicit_matrix)
 
 
-def _load_config(path: str | Path) -> dict[str, Any]:
-    """Load configuration YAML file."""
-    p = Path(path)
-    logger.info(f"[Config] Loading pipeline config from: {p.resolve()}")
-    if not p.exists():
-        logger.error(f"[Config] File not found: {p.resolve()}")
-        raise FileNotFoundError(f"Config file missing: {p.resolve()}")
-    with open(p, "r", encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
-    logger.debug(f"[Config] Configuration loaded successfully.")
-    return cfg
-
-
 def _ensure_dirs(*paths: str | Path) -> None:
-    """Create directories if they do not exist."""
     for p in paths:
         path_obj = Path(p)
         if not path_obj.exists():
             path_obj.mkdir(parents=True, exist_ok=True)
-            logger.info(f"[IO] Created directory: {path_obj.resolve()}")
         else:
-            logger.debug(f"[IO] Directory already exists: {path_obj.resolve()}")
+            logger.info(f"Dir already exists: {path_obj.resolve()}")
 
 
-def _file_or_pattern_exists(path_str: str) -> bool:
-    """Check if file exists or matches a wildcard pattern using pathlib."""
+def _filechecker(path_str: str) -> bool:
     p = Path(path_str)
     if "*" in path_str or "?" in path_str:
         matches = list(Path().glob(path_str))
         exists = len(matches) > 0
-        logger.debug(f"[Check] Wildcard pattern '{path_str}' matched {len(matches)} file(s).")
+        logger.debug(f"Wildcard pattern '{path_str}' "
+                     f"matched {len(matches)} file(s).")
         return exists
     exists = p.exists()
-    logger.debug(f"[Check] Path '{path_str}' exists: {exists}")
+    logger.debug(f"Path '{path_str}' exists: {exists}")
     return exists
 
 
@@ -85,8 +71,8 @@ def _auto_download_sources(cfg: dict[str, Any]) -> dict[str, Path]:
     logger.info(f"[Step 0] Behavior target pattern: {beh_path}")
     logger.info(f"[Step 0] Orders target pattern:   {ord_path}")
 
-    has_beh = _file_or_pattern_exists(str(beh_path))
-    has_ord = _file_or_pattern_exists(str(ord_path))
+    has_beh = _filechecker(str(beh_path))
+    has_ord = _filechecker(str(ord_path))
 
     if not has_beh or not has_ord:
         logger.warning("[Step 0] One or more source datasets missing. Triggering Kaggle downloader...")
@@ -104,8 +90,8 @@ def _auto_download_sources(cfg: dict[str, Any]) -> dict[str, Path]:
             logger.error("[Step 0] KaggleSetup failed. Unable to authenticate.")
 
     # Re-check post-download
-    has_beh_after = _file_or_pattern_exists(str(beh_path))
-    has_ord_after = _file_or_pattern_exists(str(ord_path))
+    has_beh_after = _filechecker(str(beh_path))
+    has_ord_after = _filechecker(str(ord_path))
 
     if not has_beh_after or not has_ord_after:
         logger.error(f"[Step 0] Validation failed! Behavior exists: {has_beh_after}, Orders exists: {has_ord_after}")
@@ -133,7 +119,7 @@ def build_dataset(
     logger.info("  STARTING DATASET BUILDER PIPELINE")
     logger.info("=" * 60)
 
-    cfg = _load_config(config_path)
+    cfg = deepcopy(configure)
     seed = cfg["pipeline"]["seed"]
     out_dir = Path(cfg["pipeline"]["output_dir"])
     int_dir = Path(cfg["pipeline"]["intermediate_dir"])
@@ -162,7 +148,7 @@ def build_dataset(
     events = pl.concat(
         [behavior, orders],
         how="vertical_relaxed",
-    ).collect()
+    ).collect(streaming=True)
     
     logger.info(f"[Step 1] Raw concatenated events height: {events.height:,} rows | Schema columns: {len(events.columns)}")
     events = ensure_nonempty_events(events, cfg)

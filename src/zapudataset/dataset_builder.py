@@ -61,6 +61,11 @@ def _filechecker(path_str: str) -> bool:
     logger.debug(f"Path '{path_str}' exists: {exists}")
     return exists
 
+def _resolvepath(ymlpath: str) -> Path:
+    path_obj = Path(ymlpath).expanduser().resolve()
+    if not path_obj.exists():
+        raise argparse.ArgumentTypeError(f"Config File is not found: {path_obj}")
+    return path_obj
 
 def _auto_download_sources(cfg: dict[str, Any]) -> dict[str, Path]:
     """Download Kaggle sources if missing and return verified source paths."""
@@ -70,18 +75,14 @@ def _auto_download_sources(cfg: dict[str, Any]) -> dict[str, Path]:
 
     logger.info(f"[Step 0] Behavior target pattern: {beh_path}")
     logger.info(f"[Step 0] Orders target pattern:   {ord_path}")
-
     has_beh = _filechecker(str(beh_path))
     has_ord = _filechecker(str(ord_path))
-
     if not has_beh or not has_ord:
-        logger.warning("[Step 0] One or more source datasets missing. Triggering Kaggle downloader...")
+        logger.warning("[Step 0] One or more source datasets missing. Triggering Kaggle downloader.")
         if KaggleSetup():
             ds_ids = cfg.get("sources", {}).get(
-                "kaggle_dataset_ids",
-                ["kgurl-01", "kgurl-02"],
-            )
-            logger.info(f"[Step 0] Downloading dataset IDs: {ds_ids}")
+                             "kaggle_dataset_ids",
+                             ["kgurl-01", "kgurl-02"],)
             download_status = KG_IDDown(dataset_ids=ds_ids)
             logger.info(f"[Step 0] Download status: {download_status}")
             if not all(download_status.values()):
@@ -92,20 +93,15 @@ def _auto_download_sources(cfg: dict[str, Any]) -> dict[str, Path]:
     # Re-check post-download
     has_beh_after = _filechecker(str(beh_path))
     has_ord_after = _filechecker(str(ord_path))
-
     if not has_beh_after or not has_ord_after:
         logger.error(f"[Step 0] Validation failed! Behavior exists: {has_beh_after}, Orders exists: {has_ord_after}")
         raise FileNotFoundError(
             f"Source datasets missing after download process.\n"
             f"Expected behavior path: {beh_path}\n"
-            f"Expected orders path: {ord_path}"
-        )
-
+            f"Expected orders path: {ord_path}")
     logger.info("[Step 0] Raw source datasets verified successfully.")
-    return {
-        "behavior": beh_path,
-        "orders": ord_path,
-    }
+    return {"behavior": beh_path,
+            "orders"  : ord_path,}
 
 
 def build_dataset(
@@ -307,4 +303,22 @@ class DatasetBuilder:
 
 
 if __name__ == "__main__":
-    build_dataset(config_path = './src/zapudataset/configs/pipeconf.yaml')
+    import argparse
+    
+    parser  = argparse.ArgumentParser(
+              description = "ZaPuDia End-to-End Dataset Builder Pipeline")
+    cfgpath = Path("src/zapudataset/configs/pipeconf.yaml").resolve()
+    parser.add_argument(
+              "-c",
+              "--config",
+              type    = _resolvepath,
+              default = cfgpath if cfgpath.exists() else "./src/zapudataset/configs/pipeconf.yaml",
+              help    = "Path to configuration file tipe yaml",)
+    args = parser.parse_args()
+
+    # Cast to Path.resolve()
+    config_realpath = (args.config
+                       if isinstance(args.config, Path)
+                       else Path(args.config).expanduser().resolve())
+    logger.info(f"[CLI] Executing with resolved config path: {config_realpath}")
+    build_dataset(config_path = config_realpath)

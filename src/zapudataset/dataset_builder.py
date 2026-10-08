@@ -307,4 +307,4 @@ class DatasetBuilder:
 
 
 if __name__ == "__main__":
-    build_dataset()
+    build_dataset(config_path = './src/zapudataset/configs/pipeconf.yaml')

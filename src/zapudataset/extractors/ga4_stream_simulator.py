@@ -70,13 +70,13 @@ def simulate_ga4_events(
     - The dwell time cap is obtained from 
       `config.session.gap_minutes` (converted to ms)
     """
-    seed      = config.pipeline.seed
-    provinces = config.geo_provinces
-    cap_ms    = config.session.gap_minutes * 60 * 1000
+    seed      = config["pipeline"]["seed"]
+    provinces = config["geo_provinces"]
+    cap_ms    = config["session"]["gap_minutes"] * 60 * 1000
     logger.info("Starting GA4 events simulation | Pipeline: %s v%s | Total events: %d",
-                 config.pipeline.name,
-                 config.pipeline.version,
-                 events.height,)
+                 config["pipeline"]["name"],
+                 config["pipeline"]["version"],
+                 events["height"],)
     if events.is_empty():
         logger.warning("The events DataFrame is empty; aborting the simulation.")
         return events

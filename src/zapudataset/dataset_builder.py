@@ -297,22 +297,23 @@ class DatasetBuilder:
 
 
 if __name__ == "__main__":
-    import argparse
-    
-    parser  = argparse.ArgumentParser(
-              description = "ZaPuDia End-to-End Dataset Builder Pipeline")
-    cfgpath = Path("src/zapudataset/configs/pipeconf.yaml").resolve()
-    parser.add_argument(
-              "-c",
-              "--config",
-              type    = _resolvepath,
-              default = cfgpath if cfgpath.exists() else "./src/zapudataset/configs/pipeconf.yaml",
-              help    = "Path to configuration file tipe yaml",)
-    args = parser.parse_args()
-
-    # Cast to Path.resolve()
-    config_realpath = (args.config
-                       if isinstance(args.config, Path)
-                       else Path(args.config).expanduser().resolve())
-    logger.info(f"[CLI] Executing with resolved config path: {config_realpath}")
-    build_dataset(config_path = config_realpath)
+    #import argparse
+    #
+    #parser  = argparse.ArgumentParser(
+    #          description = "ZaPuDia End-to-End Dataset Builder Pipeline")
+    #cfgpath = Path("src/zapudataset/configs/pipeconf.yaml").resolve()
+    #parser.add_argument(
+    #          "-c",
+    #          "--config",
+    #          type    = _resolvepath,
+    #          default = cfgpath if cfgpath.exists() else "./src/zapudataset/configs/pipeconf.yaml",
+    #          help    = "Path to configuration file tipe yaml",)
+    #args = parser.parse_args()
+    #
+    ## Cast to Path.resolve()
+    #config_realpath = (args.config
+    #                   if isinstance(args.config, Path)
+    #                   else Path(args.config).expanduser().resolve())
+    #logger.info(f"[CLI] Executing with resolved config path: {config_realpath}")
+    #build_dataset(config_path = config_realpath)
+    build_dataset()

@@ -76,7 +76,7 @@ def simulate_ga4_events(
     logger.info("Starting GA4 events simulation | Pipeline: %s v%s | Total events: %d",
                  config["pipeline"]["name"],
                  config["pipeline"]["version"],
-                 events["height"],)
+                 events.height,)
     if events.is_empty():
         logger.warning("The events DataFrame is empty; aborting the simulation.")
         return events

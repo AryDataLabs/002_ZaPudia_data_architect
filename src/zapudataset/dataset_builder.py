@@ -104,22 +104,16 @@ def _auto_download_sources(cfg: dict[str, Any]) -> dict[str, Path]:
             "orders"  : ord_path,}
 
 
-def build_dataset(
-    config_path: str | Path = (
-        "src/zapudataset/configs/pipeconf.yaml"
-    ),
-) -> dict[str, Any]:
-    """Run full dataset building pipeline."""
+def build_dataset() -> dict[str, Any]:
     start_time = datetime.now()
     logger.info("=" * 60)
     logger.info("  STARTING DATASET BUILDER PIPELINE")
     logger.info("=" * 60)
 
-    cfg = deepcopy(configure)
-    seed = cfg["pipeline"]["seed"]
+    cfg     = deepcopy(configure)
+    seed    = cfg["pipeline"]["seed"]
     out_dir = Path(cfg["pipeline"]["output_dir"])
     int_dir = Path(cfg["pipeline"]["intermediate_dir"])
-    
     logger.info(f"[Init] Output Directory:       {out_dir.resolve()}")
     logger.info(f"[Init] Intermediate Directory: {int_dir.resolve()}")
     _ensure_dirs(out_dir, int_dir)
@@ -137,10 +131,10 @@ def build_dataset(
         beh_cfg["event_type_map"],
     )
     
-    logger.info(f"[Step 1] Loading order logs from:    {source_paths['orders']}")
+    logger.warning(f"[Step 1] Loading order logs from:    {source_paths['orders']}")
     orders = load_kaggle_orders(str(source_paths["orders"]))
 
-    logger.info("[Step 1] Concatenating LazyFrames & collecting to RAM...")
+    logger.warning("[Step 1] Concatenating LazyFrames & collecting to RAM...")
     events = pl.concat(
         [behavior, orders],
         how="vertical_relaxed",
@@ -151,12 +145,12 @@ def build_dataset(
     logger.info(f"[Step 1] Non-empty events height:       {events.height:,} rows")
 
     # 2. Augment with GA4 telemetry
-    logger.info("[Step 2] Augmenting dataset with GA4 telemetry simulation...")
+    logger.warning("[Step 2] Augmenting dataset with GA4 telemetry simulation...")
     events = simulate_ga4_events(events, config=cfg)
     logger.info(f"[Step 2] Events height post GA4 augmentation: {events.height:,} rows")
 
     # 3. Noise injection
-    logger.info("[Step 3] Injecting synthetic noise & anomalies...")
+    logger.warning("[Step 3] Injecting synthetic noise & anomalies...")
     nz = cfg["noise"]
     ncfg = NoiseConfig(
         telemetry_drop_rate=nz["telemetry_drop_rate"],

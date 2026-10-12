@@ -168,11 +168,16 @@ def build_dataset(nlimit: int = 5_000_000) -> dict[str, Any]:
     logger.info(
         "[Step 1] Concatenating LazyFrames & collecting to RAM..."
     )
-    events = (
-        pl.concat([behavior, orders], how = "vertical_relaxed")
-        .sample(n = nlimit, seed = seed)
-        .collect(engine = "streaming")
-    )
+    if nlimit:
+        events = (
+            pl.concat([behavior, orders], how = "vertical_relaxed")
+            .filter(pl.col("user_session").hash(seed = seed).mod(100) < 10)
+            .limit(nlimit)
+            .collect(engine = "streaming"))
+    else:
+        events = (
+            pl.concat([behavior, orders], how = "vertical_relaxed")
+            .collect(engine = "streaming"))
 
     logger.info(
         f"[Step 1] Raw concatenated events height: "

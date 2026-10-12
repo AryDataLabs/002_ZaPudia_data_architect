@@ -128,7 +128,7 @@ def _auto_download_sources(cfg: dict[str, Any]) -> dict[str, Path]:
     }
 
 
-def build_dataset() -> dict[str, Any]:
+def build_dataset(nlimit: int = 5_000_000) -> dict[str, Any]:
     start_time = datetime.now()
     logger.info("=" * 60)
     logger.info("  STARTING DATASET BUILDER PIPELINE")
@@ -169,9 +169,9 @@ def build_dataset() -> dict[str, Any]:
         "[Step 1] Concatenating LazyFrames & collecting to RAM..."
     )
     events = (
-        pl.concat([behavior, orders], how="vertical_relaxed")
-        .limit(1_000_000)
-        .collect(engine="streaming")
+        pl.concat([behavior, orders], how = "vertical_relaxed")
+        .sample(n = nlimit, seed = seed)
+        .collect(engine = "streaming")
     )
 
     logger.info(

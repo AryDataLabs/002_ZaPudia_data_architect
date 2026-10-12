@@ -121,8 +121,10 @@ def SchemaRead(confpath:Path = None):
         logger.debug(f"Bot Fraction      : {cfg.noise.bot_fraction * 100}%")
         logger.debug(f"Provinces Target  : {len(cfg.geo_provinces)} Wilayah")
         logger.debug(f"Categories        : {list(cfg.categories.keys())}")
+        return cfg.model_dump()
     except ConfigError as e:
         logger.error(f"[CRITICAL] Pipeline Config Invalid:\n{e}")
+        raise ValueError()
 
 if __name__ == "__main__":
     conf = "./pipeconf.yaml"

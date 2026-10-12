@@ -138,7 +138,7 @@ def build_dataset() -> dict[str, Any]:
     events = pl.concat(
         [behavior, orders],
         how="vertical_relaxed",
-    ).collect(streaming=True)
+    ).collect(engine="streaming")
     
     logger.info(f"[Step 1] Raw concatenated events height: {events.height:,} rows | Schema columns: {len(events.columns)}")
     events = ensure_nonempty_events(events, cfg)

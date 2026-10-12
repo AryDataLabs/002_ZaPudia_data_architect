@@ -135,10 +135,11 @@ def build_dataset() -> dict[str, Any]:
     orders = load_kaggle_orders(str(source_paths["orders"]))
 
     logger.warning("[Step 1] Concatenating LazyFrames & collecting to RAM...")
-    events = pl.concat(
-        [behavior, orders],
-        how="vertical_relaxed",
-    ).collect(engine="streaming")
+    events = (
+    pl.concat([behavior, orders], how="vertical_relaxed")
+    .limit(1_000_000)  # Ambil 1 juta baris saja untuk pengujian
+    .collect(engine="streaming")
+    )
     
     logger.info(f"[Step 1] Raw concatenated events height: {events.height:,} rows | Schema columns: {len(events.columns)}")
     events = ensure_nonempty_events(events, cfg)

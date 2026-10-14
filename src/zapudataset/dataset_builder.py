@@ -3,12 +3,12 @@
 __author__     = "Aryanto"
 __copyright__  = "Copyright 2026, AryDataLabs/ZaPuDia Series"
 __credits__    = ["aryanto"]
-__license__    = "GNU_Public"
-__version__    = "0.0.3"
+__license__    = "GPL-3.0-only"
+__version__    = "0.1.1"
 __maintainer__ = "Aryanto, M.Si"
 __email__      = "aryanto.dandan@gmail.com"
 __created__    = "2026-08-31"
-__modified__   = "2026-10-12"
+__modified__   = "2026-10-14"
 
 """
 End-to-end dataset builder orchestrator with logging.
@@ -73,7 +73,10 @@ def _resolvepath(ymlpath: str) -> Path:
     return path_obj
 
 
-def _auto_download_sources(cfg: dict[str, Any]) -> dict[str, Path]:
+def _auto_download_sources(
+    cfg: dict[str, Any],
+    kaggle_dataset_ids: list[str] | None = None,
+) -> dict[str, Path]:
     """Verify and download missing Kaggle source datasets."""
     logger.info("[Step 0] Verifying raw source datasets...")
     beh_path = Path(cfg["sources"]["kaggle_behavior"]["path"])
@@ -90,10 +93,12 @@ def _auto_download_sources(cfg: dict[str, Any]) -> dict[str, Path]:
             "[Step 0] Source dataset missing. Triggering downloader."
         )
         if KaggleSetup():
-            ds_ids = cfg.get("sources", {}).get(
-                "kaggle_dataset_ids",
-                ["kgurl-01", "kgurl-02"],
+            ds_ids = (
+                kaggle_dataset_ids
+                or cfg.get("sources", {}).get("kaggle_dataset_ids")
+                or ["kgurl-01", "kgurl-02"]
             )
+            logger.info(f"[Step 0] Downloading dataset IDs: {ds_ids}")
             download_status = KG_IDDown(dataset_ids=ds_ids)
             logger.info(
                 f"[Step 0] Download status: {download_status}"
@@ -128,7 +133,10 @@ def _auto_download_sources(cfg: dict[str, Any]) -> dict[str, Path]:
     }
 
 
-def build_dataset(nlimit: int = 5_000_000) -> dict[str, Any]:
+def build_dataset(
+    nlimit: int = 5_000_000,
+    kaggle_dataset_ids: list[str] | None = None,
+) -> dict[str, Any]:
     start_time = datetime.now()
     logger.info("=" * 60)
     logger.info("  STARTING DATASET BUILDER PIPELINE")
@@ -142,7 +150,7 @@ def build_dataset(nlimit: int = 5_000_000) -> dict[str, Any]:
     _ensure_dirs(out_dir)
 
     # 0. Auto download raw datasets & get verified filepaths
-    source_paths = _auto_download_sources(cfg)
+    source_paths = _auto_download_sources(cfg, kaggle_dataset_ids=kaggle_dataset_ids)
 
     # 1. Extract & harmonize Kaggle sources
     logger.info(
@@ -363,15 +371,27 @@ class DatasetBuilder:
         config_path: str | Path = (
             "src/zapudataset/configs/pipeconf.yaml"
         ),
+        kaggle_dataset_ids: list[str] | None = None,
     ) -> None:
         self.config_path = config_path
+        self.kaggle_dataset_ids = kaggle_dataset_ids
 
-    def build(self) -> dict[str, Any]:
-        return build_dataset()
+    def build(
+        self,
+        nlimit: int = 5_000_000,
+        kaggle_dataset_ids: list[str] | None = None,
+    ) -> dict[str, Any]:
+        ds_ids = kaggle_dataset_ids if kaggle_dataset_ids is not None else self.kaggle_dataset_ids
+        return build_dataset(nlimit=nlimit, kaggle_dataset_ids=ds_ids)
 
-    def run(self) -> dict[str, Any]:
-        return self.build()
+    def run(
+        self,
+        nlimit: int = 5_000_000,
+        kaggle_dataset_ids: list[str] | None = None,
+    ) -> dict[str, Any]:
+        return self.build(nlimit=nlimit, kaggle_dataset_ids=kaggle_dataset_ids)
 
 
 if __name__ == "__main__":
-    build_dataset()
+    build_dataset(nlimit = 7_000_000, 
+                  kaggle_dataset_ids = ['kgurl-01', 'kgurl-02'])

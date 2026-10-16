@@ -38,6 +38,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
@@ -64,6 +69,10 @@ jobs:
       - name: Install wheel and import test
         continue-on-error: ${{ matrix.os != 'ubuntu-latest' }}
         shell: bash
+        env:
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
           uv pip install --system --reinstall --prerelease=allow dist/*.whl
           python -c "import zapudataset; from zapudataset import pipeline, extractors, transformers, noise, configs; zapudataset.get_api()"
@@ -74,7 +83,7 @@ jobs:
         with:
           name: zapudia-wheel-py${{ matrix.python-version }}-${{ matrix.os }}
           path: dist/*.whl
-          retention-days: 90
+          retention-days: 30
           if-no-files-found: error
 
       - name: Upload sdist artifact
@@ -82,7 +91,7 @@ jobs:
         with:
           name: zapudia-sdist-py${{ matrix.python-version }}-${{ matrix.os }}
           path: dist/*.tar.gz
-          retention-days: 90
+          retention-days: 30
           if-no-files-found: warn
 
   publish:

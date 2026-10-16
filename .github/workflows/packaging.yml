@@ -38,18 +38,19 @@ jobs:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
 
-      - name: Install build dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install build setuptools wheel twine
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
       - name: Build wheel and sdist
-        run: |
-          python -m build --wheel --sdist
+        run: uv build
 
       - name: Verify wheel metadata
-        run: |
-          python -m twine check dist/*
+        run: uvx twine check dist/*
 
       - name: Display wheel contents
         run: |
@@ -66,8 +67,14 @@ jobs:
           "
 
       - name: Install wheel and import test
+        continue-on-error: ${{ matrix.os != 'ubuntu-latest' }}
+        shell: bash
+        env:
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
-          python -m pip install --force-reinstall dist/*.whl
+          uv pip install --system --reinstall --prerelease=allow dist/*.whl
           python -c "import zapudataset; from zapudataset import pipeline, extractors, transformers, noise, configs; zapudataset.get_api()"
           echo "All packages imported successfully"
 

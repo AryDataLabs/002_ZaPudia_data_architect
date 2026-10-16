@@ -103,20 +103,56 @@ jobs:
       contents: write
 
     steps:
+      # 1. Download semua artifact wheel matrix tanpa merge
       - name: Download all wheel artifacts
         uses: actions/download-artifact@v4
         with:
-          path: dist
-          merge-multiple: true
+          path: dist_artifacts
           pattern: zapudia-wheel-*
 
-      - name: Display downloaded artifacts
+      # 2. Download artifact sdist (.tar.gz)
+      - name: Download sdist artifact
+        uses: actions/download-artifact@v4
+        with:
+          path: dist_artifacts
+          pattern: zapudia-sdist-py3.12-ubuntu-latest
+
+      # 3. Rename dan susun wheel per versi Python & OS ke folder dist
+      - name: Organize and rename wheels per Python version
+        shell: bash
+        run: |
+          mkdir -p dist
+          
+          # Rename wheel agar unik berdasarkan matriks versi Python & OS
+          for dir in dist_artifacts/zapudia-wheel-*; do
+            if [ -d "$dir" ]; then
+              matrix_tag="${dir#dist_artifacts/zapudia-wheel-}"
+              for file in "$dir"/*.whl; do
+                if [ -f "$file" ]; then
+                  base_name=$(basename "$file" .whl)
+                  cp "$file" "dist/${base_name}-${matrix_tag}.whl"
+                fi
+              done
+            fi
+          done
+
+          # Salin file sdist tarball (.tar.gz)
+          for file in dist_artifacts/zapudia-sdist-*/*.tar.gz; do
+            if [ -f "$file" ]; then
+              cp "$file" dist/
+            fi
+          done
+
+      - name: Display release assets
         run: ls -la dist/
 
+      # 4. Unggah seluruh wheel per versi Python & sdist ke GitHub Release
       - name: Create GitHub Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.whl
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}

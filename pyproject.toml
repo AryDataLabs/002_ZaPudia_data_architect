@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name          = "zapudia-data-architect"
-version       = "0.1.1"
+version       = "0.1.2"
 description   = "Production-ready e-commerce recommendation system dataset pipeline"
 readme        = "README.md"
 license       = { text = "GPL-3.0-only" }
@@ -17,7 +17,7 @@ keywords      = ["recommendation-system",
                  "polars",
                  "dataset-generation",
                  "noise-injection",]
-classifiers   = ["Development Status :: 4 - Beta",
+classifiers   = ["Development Status :: 5 - Production/Stable",
                  "Intended Audience :: Developers",
                  "Intended Audience :: Science/Research",
                  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",

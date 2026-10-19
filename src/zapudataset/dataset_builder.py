@@ -133,29 +133,26 @@ def _auto_download_sources(
     }
 
 
-def build_dataset(
-    nlimit: int = 5_000_000,
-    kaggle_dataset_ids: list[str] | None = None,
-) -> dict[str, Any]:
+def build_dataset(nlimit            : int = 5_000_000,
+                  kaggle_dataset_ids: list[str] | None = None,
+    ) -> dict[str, Any]:
     start_time = datetime.now()
     logger.info("=" * 60)
     logger.info("  STARTING DATASET BUILDER PIPELINE")
     logger.info("=" * 60)
-
     cfg     = deepcopy(configure)
     seed    = cfg["pipeline"]["seed"]
     out_dir = Path(cfg["pipeline"]["output_dir"])
-
     logger.info(f"[Init] Output Directory: {out_dir.resolve()}")
     _ensure_dirs(out_dir)
 
     # 0. Auto download raw datasets & get verified filepaths
-    source_paths = _auto_download_sources(cfg, kaggle_dataset_ids=kaggle_dataset_ids)
+    source_paths = _auto_download_sources(cfg, 
+                    kaggle_dataset_ids = kaggle_dataset_ids)
 
     # 1. Extract & harmonize Kaggle sources
     logger.info(
-        "[Step 1] Extracting & harmonizing Kaggle sources..."
-    )
+        "[Step 1] Extracting & harmonizing Kaggle sources.")
     beh_cfg = cfg["sources"]["kaggle_behavior"]
 
     logger.info(
